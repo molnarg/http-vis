@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>http-vis</title>
+
+    <meta charset='utf-8'>
+
+    <script src="vendor/jquery-1.9.1.min.js"></script>
+    <script src="vendor/underscore-min.js"></script>
+    <script src="vendor/d3.v3.min.js"></script>
+    <script src="vendor/packet.js"></script>
+    <script src="vendor/http-parser.min.js"></script>
+    <script src="vendor/bootstrap-filestyle-0.1.0.min.js"></script>
+
+    <script src="js/Capture.js"></script>
+    <script src="js/Stripes.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap-responsive.css">
+
+    <style type="text/css">
+        body {
+            padding-top: 40px;
+            background-color: black;
+        }
+        #canvas {
+            border: 1px solid grey;
+            margin-right: 5px;
+            visibility: hidden;
+        }
+        #options {
+            position: absolute;
+            top: 35px;
+            left: auto;
+            right: 20px;
+            max-width: none;
+            width: 228px;
+            margin-top: 10px;
+            float: right;
+        }
+        #options .arrow {
+            left: auto;
+            right: 53px;
+        }
+        #options .popover-content {
+            text-align: center;
+        }
+        #options .popover-content input, #options .popover-content select {
+            width: 200px;
+        }
+        #options .network-arrow {
+            font-size: 16px;
+        }
+        #options label {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        #loading {
+            margin-right: 0.5em;
+            display: none;
+        }
+
+        #stripes-container {
+
+        }
+
+        #stripes-container svg {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar navbar-fixed-top navbar-inverse">
+        <div class="navbar-inner">
+            <div class="container" style="width: auto; padding: 0 20px;">
+                <a class="brand" href="#">http-vis</a>
+                <!--<p class="navbar-text pull-left">Every packet matters.</p>-->
+                <form class="navbar-form pull-right" style="margin-left: 4px;">
+                    <div class="btn-group">
+                        <button id="options-toggle" disabled class="btn dropdown-toggle"><i class="icon-wrench"></i></button>
+                    </div>
+                    <button id="download-button" disabled class="btn"><i class="icon-download"></i></button>
+
+                    <div id="options" class="popover bottom">
+                        <div class="arrow"></div>
+                        <h3 class="popover-title">Options</h3>
+                        <div class="popover-content">
+                            <label>Filtering and bandwidth</label>
+                            <select id="server-dropdown"></select>
+                            <div class="network-arrow" style="margin-top: 7px;">⇓</div>
+                            <div class="input-append">
+                                <input id="bandwidth-input" style="width: 3em;" type="text">
+                                <span class="add-on">kbps</span>
+                            </div>
+                            <div class="network-arrow" style="margin-top: -3px;">⇓</div>
+                            <select id="client-dropdown"></select>
+
+                            <label style="margin-top: 30px;">Color packets by</label>
+                            <select id="color-dropdown">
+                                <option>stream</option>
+                                <option>domain</option>
+                                <option>content-type</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+                <form class="navbar-form pull-right">
+                    <input id="file-chooser" type="file">
+                </form>
+                <p id="loading" class="navbar-text">
+                    loading...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="stripes-container">
+        <!--
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+            <!ATTLIST rect packet-id CDATA #IMPLIED>
+        ]>
+        -->
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+            <style type="text/css">
+                svg {
+                    shape-rendering: crispEdges;
+                    font-size: 21px;
+                }
+
+                rect.stream {
+                    fill: #FFF;
+                    fill-opacity: 0.7;
+                    /*
+                    stroke: grey;
+                    stroke-width: 0.1em;
+                    stroke-opacity: 0.5;
+                    */
+                }
+
+                rect#background {
+                    fill: black;
+                }
+            </style>
+            <rect id="background" width="100%" height="100%"></rect>
+        </svg>
+    </div>
+
+    <script>
+        $('#stripes-container>svg').attr('width', $(document).width() + 'px')
+
+        var stripes = new Stripes(document.getElementById('stripes-container').children[0])
+
+        var capture, filtered_capture, color_by = 'stream', bandwidth
+
+        function draw() {
+            stripes.draw(filtered_capture, bandwidth, color_by)
+        }
+
+        function filter(client, server) {
+            if (client === 'any client') client = undefined
+            if (server === 'any server') server = undefined
+            filtered_capture = capture.filter(client, server)
+            var kbit = filtered_capture.bandwidth() * 0.95
+            $('#bandwidth-input').val(Math.round(kbit))
+            bandwidth = kbit * 1000 / 8
+        }
+
+        function options(dropdown, options) {
+            dropdown.html(options.map(function(text) { return '<option>' + text + '</option>'}).join(''))
+        }
+
+        $("#file-chooser").filestyle({
+            buttonText: 'Choose PCAP file',
+            icon: true,
+            classIcon: 'icon-folder-open',
+            textField: false
+        }).change(function() {
+            $('#loading').show()
+            var file = this.files[0]
+            var reader = new FileReader()
+
+            reader.readAsArrayBuffer(file)
+            reader.onload = function() {
+                var pcap = new DataView(reader.result)
+
+                capture = new Capture(pcap)
+                filter(undefined, undefined)
+                draw()
+
+                options($('#client-dropdown'), ['any client'].concat(capture.clients()))
+                options($('#server-dropdown'), ['any server'].concat(capture.servers()))
+                $('#options-toggle').prop('disabled', false)
+                $('#download-button').prop('disabled', false)
+                $('#loading').hide()
+            }
+        })
+
+        $('#options-toggle').click(function() {
+            $(this).parent().toggleClass('open')
+            $('#options').toggle()
+            return false
+        })
+
+        $('#download-button').click(function() {
+            stripes.download()
+            return false
+        })
+
+        $('#color-dropdown').change(function() {
+            color_by = this.selectedOptions[0].innerHTML
+            draw()
+        })
+
+        $('#bandwidth-input').change(function() {
+            bandwidth = Number(this.value) * 1000 / 8
+            draw()
+        })
+
+        var clients_dropdown = document.getElementById('client-dropdown')
+          , servers_dropdown = document.getElementById('server-dropdown')
+        clients_dropdown.onchange = servers_dropdown.onchange = function filter_change() {
+            var selected_client = clients_dropdown.selectedOptions[0].innerHTML
+            var selected_server = servers_dropdown.selectedOptions[0].innerHTML
+            filter(selected_client, selected_server)
+            draw()
+        }
+    </script>
+
+</body>
+
+</html>
