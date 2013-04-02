@@ -102,36 +102,38 @@ window.Stripes = class Stripes
 
     # Drawing transactions
     transactions = capture.transactions()
-    streams = []
-    tps = transactions.map (transaction) ->
-      first_packet = transaction.packets[0]
-      last_packet = transaction.packets[transaction.packets.length - 1]
-      streams.push transaction.stream if transaction.stream not in streams
-
-      transaction_begin = first_packet.timestamp - duration(first_packet)
-      x = transaction_begin - capture_begin
-      width = last_packet.timestamp - transaction_begin
-      y = 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
-
-      return { x, width, y }
+    streams = capture.streams.filter (stream) -> stream.transactions.length isnt 0
+    transaction_y = (transaction) -> 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
 
     bars = @svg.selectAll('a.transaction').data(transactions)
 
-    bars.enter()
-      .append('a')
-        .attr('class', 'transaction')
-        .attr('id', (t, id) -> 'transaction-' + id)
-        .attr('xlink:href', (t, id) -> t.request.url)
-        .append('rect')
-          .attr('class', 'stream')
-          .attr('height', '1em')
+    as = bars.enter().append('a')
+      .attr('class', 'transaction')
+      .attr('id', (t, id) -> 'transaction-' + id)
+      .attr('xlink:href', (t, id) -> t.request.url)
+    as.append('rect')
+      .attr('class', 'stream')
+      .attr('height', '1em')
+    as.append('rect')
+      .attr('class', 'request')
+      .attr('height', '1em')
+    #as.append('rect')
+    #  .attr('class', 'response')
+    #  .attr('height', '1em')
 
-    bars
-      .each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), tps[id].y + 0.1 + 'em', '0.8em')
-      .select('rect')
-        .attr('x',     (t, id) -> scale(tps[id].x))
-        .attr('y',     (t, id) -> tps[id].y + 'em')
-        .attr('width', (t, id) -> scale(tps[id].width))
+    bars.each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
+    bars.select('rect.stream')
+      .attr('x',     (t, id) -> scale(t.packets[0].timestamp - capture_begin)) #scale(tps[id].response_x))
+      .attr('y',     (t, id) -> transaction_y(t) + 'em') #tps[id].y + 'em')
+      .attr('width', (t, id) -> scale(t.response_end() - t.packets[0].timestamp)) #scale(tps[id].response_width))
+    bars.select('rect.request')
+      .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin)) #scale(tps[id].request_x))
+      .attr('y',     (t, id) -> transaction_y(t) + 'em') # tps[id].y + 'em')
+      .attr('width', (t, id) -> scale(t.request_duration(bandwidth))) #scale(tps[id].request_width))
+    #bars.select('rect.response')
+    #  .attr('x',     (t, id) -> scale(t.response_begin(bandwidth) - capture_begin)) #scale(tps[id].response_x))
+    #  .attr('y',     (t, id) -> transaction_y(t) + 'em') #tps[id].y + 'em')
+    #  .attr('width', (t, id) -> scale(t.response_duration(bandwidth))) #scale(tps[id].response_width))
 
     bars.exit().remove()
 

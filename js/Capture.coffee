@@ -1,6 +1,8 @@
 Packet = window.Packet
 HTTPParser = window.HTTPParser
 
+packet_begin = (packet, bandwidth) -> packet.timestamp - packet.size / bandwidth
+
 window.Capture = class Capture
   constructor: (pcap) ->
     @pcap = new Packet.views.PcapFile(pcap)
@@ -100,7 +102,6 @@ class Transaction
       @request_ack = @packets[@packets.length - 1]
     res_parser.onHeadersComplete = (info) =>
       @response = parse_headers(info)
-      @response_last = @packets_in[@packets_in.length - 1]
 
     @packets = []
     @packets_in = []
@@ -110,12 +111,28 @@ class Transaction
       @packets.push packet
       if packet.ipv4.src.toString() == connection.a.ip and packet.tcp.srcport == connection.a.port
         @packets_out.push packet
+        @request_first_data ?= packet if packet.tcp.payload.size > 0
       else
         @packets_in.push packet
 
-    ab.on 'data', (dv) -> req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
+    ab.on 'data', (dv) =>
+      #@request_first_data ?= @packets_out[@packets_out.length - 1]
+      req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ba.on 'data', (dv) -> res_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
 
     res_parser.onMessageComplete = =>
       stream.removeAllListeners('data') for stream in [connection, ab, ba]
       ready()
+
+  request_first: -> @request_first_data or @packets_out[0]
+  request_last: -> @request_ack
+  request_begin: (bandwidth) -> packet_begin @request_first(), bandwidth
+  request_end: -> @request_last().timestamp
+  request_duration: (bandwidth) -> @request_end() - @request_begin(bandwidth)
+
+  response_first: -> @packets_in[@packets_in.indexOf(@request_ack) + 1]
+  response_last: -> @packets_in[@packets_in.length - 1]
+  response_begin: (bandwidth) -> packet_begin @response_first(), bandwidth
+  response_end: -> @response_last().timestamp
+  response_duration: (bandwidth) -> @response_end() - @response_begin(bandwidth)
+
