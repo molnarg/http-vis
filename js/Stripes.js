@@ -127,11 +127,11 @@
         return draw_packets(d3.select(this).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em');
       });
       bars.select('rect.stream').attr('x', function(t, id) {
-        return scale(t.packets[0].timestamp - capture_begin);
+        return scale(t.begin(bandwidth) - capture_begin);
       }).attr('y', function(t, id) {
         return transaction_y(t) + 'em';
       }).attr('width', function(t, id) {
-        return scale(t.response_end() - t.packets[0].timestamp);
+        return scale(t.response_end() - t.begin(bandwidth));
       });
       bars.select('rect.request').attr('x', function(t, id) {
         return scale(t.request_begin(bandwidth) - capture_begin);

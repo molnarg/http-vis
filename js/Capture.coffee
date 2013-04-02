@@ -125,11 +125,14 @@ class Transaction
       @packets.push packet
       if packet.ipv4.src.toString() == connection.a.ip and packet.tcp.srcport == connection.a.port
         @packets_out.push packet
-        @request_first_data ?= packet if packet.tcp.payload.size > 0
       else
         @packets_in.push packet
 
-    ab.on 'data', (dv) -> req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
+    ab.on 'data', (dv, chunk) =>
+      # @request_first_packet is not always contained in @packets_out and @packets, because it may be an ack to
+      # a previous response, so it is in the packets array of that response! That's why @begin() works the way it does.
+      @request_first_packet ?= chunk.parent.parent.parent.parent
+      req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ba.on 'data', (dv) -> res_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ab.on 'end', -> req_parser.finish()
     ba.on 'end', -> res_parser.finish()
@@ -139,7 +142,10 @@ class Transaction
       stream.removeAllListeners('end') for stream in [connection, ab, ba]
       ready()
 
-  request_first: -> @request_first_data or @packets_out[0]
+  begin: (bandwidth) -> Math.min(@request_begin(bandwidth), packet_begin(@packets[0], bandwidth))
+  end: -> packets[packets.length - 1].timestamp
+
+  request_first: -> @request_first_packet
   request_last: -> @request_ack
   request_begin: (bandwidth) -> packet_begin @request_first(), bandwidth
   request_end: -> @request_last().timestamp

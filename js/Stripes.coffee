@@ -122,9 +122,9 @@ window.Stripes = class Stripes
 
     bars.each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
     bars.select('rect.stream')
-      .attr('x',     (t, id) -> scale(t.packets[0].timestamp - capture_begin)) #scale(tps[id].response_x))
+      .attr('x',     (t, id) -> scale(t.begin(bandwidth) - capture_begin)) #scale(tps[id].response_x))
       .attr('y',     (t, id) -> transaction_y(t) + 'em') #tps[id].y + 'em')
-      .attr('width', (t, id) -> scale(t.response_end() - t.packets[0].timestamp)) #scale(tps[id].response_width))
+      .attr('width', (t, id) -> scale(t.response_end() - t.begin(bandwidth))) #scale(tps[id].response_width))
     bars.select('rect.request')
       .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin)) #scale(tps[id].request_x))
       .attr('y',     (t, id) -> transaction_y(t) + 'em') # tps[id].y + 'em')

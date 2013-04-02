@@ -288,19 +288,19 @@
       this.packets_in = [];
       this.packets_out = [];
       connection.on('data', function(buffer, packet) {
-        var _ref;
         packet.transaction = _this;
         _this.packets.push(packet);
         if (packet.ipv4.src.toString() === connection.a.ip && packet.tcp.srcport === connection.a.port) {
-          _this.packets_out.push(packet);
-          if (packet.tcp.payload.size > 0) {
-            return (_ref = _this.request_first_data) != null ? _ref : _this.request_first_data = packet;
-          }
+          return _this.packets_out.push(packet);
         } else {
           return _this.packets_in.push(packet);
         }
       });
-      ab.on('data', function(dv) {
+      ab.on('data', function(dv, chunk) {
+        var _ref;
+        if ((_ref = _this.request_first_packet) == null) {
+          _this.request_first_packet = chunk.parent.parent.parent.parent;
+        }
         return req_parser.execute(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength);
       });
       ba.on('data', function(dv) {
@@ -328,8 +328,16 @@
       };
     }
 
+    Transaction.prototype.begin = function(bandwidth) {
+      return Math.min(this.request_begin(bandwidth), packet_begin(this.packets[0], bandwidth));
+    };
+
+    Transaction.prototype.end = function() {
+      return packets[packets.length - 1].timestamp;
+    };
+
     Transaction.prototype.request_first = function() {
-      return this.request_first_data || this.packets_out[0];
+      return this.request_first_packet;
     };
 
     Transaction.prototype.request_last = function() {
