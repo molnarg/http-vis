@@ -275,8 +275,11 @@
       req_parser = new HTTPParser(HTTPParser.REQUEST);
       res_parser = new HTTPParser(HTTPParser.RESPONSE);
       req_parser.onHeadersComplete = function(info) {
+        if (_this.request != null) {
+          return;
+        }
         _this.request = parse_headers(info);
-        return _this.request_ack = _this.packets[_this.packets.length - 1];
+        return _this.request_ack = _this.packets_in[_this.packets_in.length - 1];
       };
       res_parser.onHeadersComplete = function(info) {
         return _this.response = parse_headers(info);
@@ -303,12 +306,23 @@
       ba.on('data', function(dv) {
         return res_parser.execute(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength);
       });
+      ab.on('end', function() {
+        return req_parser.finish();
+      });
+      ba.on('end', function() {
+        return res_parser.finish();
+      });
       res_parser.onMessageComplete = function() {
-        var _i, _len, _ref;
+        var _i, _j, _len, _len1, _ref, _ref1;
         _ref = [connection, ab, ba];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           stream = _ref[_i];
           stream.removeAllListeners('data');
+        }
+        _ref1 = [connection, ab, ba];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          stream = _ref1[_j];
+          stream.removeAllListeners('end');
         }
         return ready();
       };

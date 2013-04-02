@@ -1968,6 +1968,7 @@ function TCPConnection(a, b) {
 util.inherits(TCPConnection, Stream)
 
 TCPConnection.prototype.process = function(packet) {
+  if (this.ended) return
   this.emit('data', packet.data, packet)
 
   var ip = packet.ipv4
@@ -1997,8 +1998,17 @@ TCPConnection.prototype.process = function(packet) {
 
   // Ending the streams and the connection
   if (tcp.flags.fin) src.fin = true
-  if (tcp.flags.ack && dst.fin) dst.stream.emit('end')
-  if (src.fin && tcp.fin) this.emit('end')
+
+  if (Object.keys(dst.unacknowledged).length === 0 && dst.fin) {
+    if (!dst.stream.ended) (dst.stream.ended = true) && dst.stream.emit('end')
+    if (!this.ended && src.stream.ended) (this.ended = true) && this.emit('end')
+  }
+
+  if (tcp.flags.reset) {
+    if (!dst.stream.ended) (dst.stream.ended = true) && dst.stream.emit('end')
+    if (!src.stream.ended) (src.stream.ended = true) && src.stream.emit('end')
+    if (!this.ended) (this.ended = true) && this.emit('end')
+  }
 }
 
 TCPConnection.prototype.toString = function() {

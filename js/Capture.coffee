@@ -111,8 +111,9 @@ class Transaction
     res_parser = new HTTPParser(HTTPParser.RESPONSE)
 
     req_parser.onHeadersComplete = (info) =>
+      return if @request?
       @request = parse_headers(info)
-      @request_ack = @packets[@packets.length - 1]
+      @request_ack = @packets_in[@packets_in.length - 1]
     res_parser.onHeadersComplete = (info) =>
       @response = parse_headers(info)
 
@@ -128,13 +129,14 @@ class Transaction
       else
         @packets_in.push packet
 
-    ab.on 'data', (dv) =>
-      #@request_first_data ?= @packets_out[@packets_out.length - 1]
-      req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
+    ab.on 'data', (dv) -> req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ba.on 'data', (dv) -> res_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
+    ab.on 'end', -> req_parser.finish()
+    ba.on 'end', -> res_parser.finish()
 
     res_parser.onMessageComplete = =>
       stream.removeAllListeners('data') for stream in [connection, ab, ba]
+      stream.removeAllListeners('end') for stream in [connection, ab, ba]
       ready()
 
   request_first: -> @request_first_data or @packets_out[0]
