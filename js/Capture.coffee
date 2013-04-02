@@ -156,4 +156,3 @@ class Transaction
   response_begin: (bandwidth) -> packet_begin @response_first(), bandwidth
   response_end: -> @response_last().timestamp
   response_duration: (bandwidth) -> @response_end() - @response_begin(bandwidth)
-

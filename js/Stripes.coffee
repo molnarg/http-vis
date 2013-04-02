@@ -23,11 +23,6 @@ window.Stripes = class Stripes
 
   constructor: (svg) ->
     @svg = d3.select(svg)
-    #@svg = d3.select(@container).append('svg')
-    #    .attr('width', '100%')
-    #    .attr('style', 'shape-rendering: crispEdges; font-size: 1.5em;')
-
-    #@svg.append('script').text('function packet_info(stripe) { console.log(stripe) }')
 
   download: ->
     xml = @svg.node().parentNode.innerHTML.replace(/^\s*<!--\s*([\s\S]*)-->\s*<svg/, '$1\n<svg')
@@ -87,8 +82,6 @@ window.Stripes = class Stripes
         .attr('y', y)
         .attr('height', height)
         .attr('packet-id', (packet) -> packet.id)
-        #.attr('onmouseover', 'packet_info(this)')
-        #.attr('title', (packet) -> packet.id)
 
       stripes
         .attr('x', (packet) -> scale(packet.timestamp - duration(packet) - capture_begin))
@@ -122,17 +115,17 @@ window.Stripes = class Stripes
 
     bars.each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
     bars.select('rect.stream')
-      .attr('x',     (t, id) -> scale(t.begin(bandwidth) - capture_begin)) #scale(tps[id].response_x))
-      .attr('y',     (t, id) -> transaction_y(t) + 'em') #tps[id].y + 'em')
-      .attr('width', (t, id) -> scale(t.response_end() - t.begin(bandwidth))) #scale(tps[id].response_width))
+      .attr('x',     (t, id) -> scale(t.begin(bandwidth) - capture_begin))
+      .attr('y',     (t, id) -> transaction_y(t) + 'em')
+      .attr('width', (t, id) -> scale(t.response_end() - t.begin(bandwidth)))
     bars.select('rect.request')
-      .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin)) #scale(tps[id].request_x))
-      .attr('y',     (t, id) -> transaction_y(t) + 'em') # tps[id].y + 'em')
-      .attr('width', (t, id) -> scale(t.request_duration(bandwidth))) #scale(tps[id].request_width))
+      .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin))
+      .attr('y',     (t, id) -> transaction_y(t) + 'em')
+      .attr('width', (t, id) -> scale(t.request_duration(bandwidth)))
     #bars.select('rect.response')
-    #  .attr('x',     (t, id) -> scale(t.response_begin(bandwidth) - capture_begin)) #scale(tps[id].response_x))
-    #  .attr('y',     (t, id) -> transaction_y(t) + 'em') #tps[id].y + 'em')
-    #  .attr('width', (t, id) -> scale(t.response_duration(bandwidth))) #scale(tps[id].response_width))
+    #  .attr('x',     (t, id) -> scale(t.response_begin(bandwidth) - capture_begin))
+    #  .attr('y',     (t, id) -> transaction_y(t) + 'em')
+    #  .attr('width', (t, id) -> scale(t.response_duration(bandwidth)))
 
     bars.exit().remove()
 
