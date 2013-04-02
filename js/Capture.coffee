@@ -60,7 +60,6 @@ window.Capture = class Capture
       current_bandwidth = window_bytes * 8 / window_size / 1000
       max_bandwidth = current_bandwidth if current_bandwidth > max_bandwidth
 
-    console.log 'bandwidth', Math.ceil max_bandwidth
     return Math.ceil max_bandwidth
 
 class Stream
@@ -118,6 +117,5 @@ class Transaction
     ba.on 'data', (dv) -> res_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
 
     res_parser.onMessageComplete = =>
-      console.log 'COMPLETE'
       stream.removeAllListeners('data') for stream in [connection, ab, ba]
       ready()

@@ -141,7 +141,6 @@
           max_bandwidth = current_bandwidth;
         }
       }
-      console.log('bandwidth', Math.ceil(max_bandwidth));
       return Math.ceil(max_bandwidth);
     };
 
@@ -234,7 +233,6 @@
       });
       res_parser.onMessageComplete = function() {
         var _i, _len, _ref;
-        console.log('COMPLETE');
         _ref = [connection, ab, ba];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           stream = _ref[_i];

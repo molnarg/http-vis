@@ -146,7 +146,6 @@
       });
       bars.exit().remove();
       em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
-      console.log(em);
       return this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 'px');
     };
 
