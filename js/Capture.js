@@ -17,21 +17,14 @@
         _this = this;
       this.pcap = new Packet.views.PcapFile(pcap);
       this.streams = [];
-      this.first_packet = void 0;
-      this.last_packet = void 0;
       tcp_tracker = Packet.stream.tcp();
       tcp_tracker.on('connection', function(ab, ba, connection) {
         return _this.streams.push(new Stream(_this, ab, ba, connection));
       });
       this.pcap.packets.forEach(function(packet, id) {
-        var _ref;
         packet.id = id;
         packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000;
-        tcp_tracker.write(packet);
-        if ((_ref = _this.first_packet) == null) {
-          _this.first_packet = packet;
-        }
-        return _this.last_packet = packet;
+        return tcp_tracker.write(packet);
       });
     }
 
@@ -93,9 +86,33 @@
           filtered.streams.push(stream);
         }
       }
-      filtered.first_packet = this.first_packet;
-      filtered.last_packet = this.last_packet;
       return filtered;
+    };
+
+    Capture.prototype.packets = function() {
+      var packets, stream, transaction;
+      packets = _.flatten((function() {
+        var _i, _len, _ref, _results;
+        _ref = this.streams;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          stream = _ref[_i];
+          _results.push((function() {
+            var _j, _len1, _ref1, _results1;
+            _ref1 = stream.transactions;
+            _results1 = [];
+            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+              transaction = _ref1[_j];
+              _results1.push(transaction.packets);
+            }
+            return _results1;
+          })());
+        }
+        return _results;
+      }).call(this));
+      return _.sortBy(packets, function(packet) {
+        return packet.timestamp;
+      });
     };
 
     Capture.prototype.packets_in = function() {
@@ -122,6 +139,54 @@
       return _.sortBy(packets, function(packet) {
         return packet.timestamp;
       });
+    };
+
+    Capture.prototype.packets_out = function() {
+      var packets, stream, transaction;
+      packets = _.flatten((function() {
+        var _i, _len, _ref, _results;
+        _ref = this.streams;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          stream = _ref[_i];
+          _results.push((function() {
+            var _j, _len1, _ref1, _results1;
+            _ref1 = stream.transactions;
+            _results1 = [];
+            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+              transaction = _ref1[_j];
+              _results1.push(transaction.packets_out);
+            }
+            return _results1;
+          })());
+        }
+        return _results;
+      }).call(this));
+      return _.sortBy(packets, function(packet) {
+        return packet.timestamp;
+      });
+    };
+
+    Capture.prototype.first_packet = function() {
+      return this.packets()[0];
+    };
+
+    Capture.prototype.last_packet = function() {
+      var packets;
+      packets = this.packets();
+      return packets[packets.length - 1];
+    };
+
+    Capture.prototype.begin = function(bandwidth) {
+      return packet_begin(this.first_packet(), bandwidth);
+    };
+
+    Capture.prototype.end = function() {
+      return this.last_packet().timestamp;
+    };
+
+    Capture.prototype.duration = function(bandwidth) {
+      return this.end() - this.begin(bandwidth);
     };
 
     Capture.prototype.bandwidth = function() {

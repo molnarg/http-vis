@@ -7,8 +7,6 @@ window.Capture = class Capture
   constructor: (pcap) ->
     @pcap = new Packet.views.PcapFile(pcap)
     @streams = []
-    @first_packet = undefined
-    @last_packet = undefined
 
     tcp_tracker = Packet.stream.tcp()
     tcp_tracker.on 'connection', (ab, ba, connection) => @streams.push new Stream(@, ab, ba, connection)
@@ -16,8 +14,6 @@ window.Capture = class Capture
       packet.id = id
       packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
       tcp_tracker.write packet
-      @first_packet ?= packet
-      @last_packet = packet
 
   clients: ->
     _.uniq (stream.src.ip for stream in @streams when stream.transactions.length isnt 0)
@@ -35,13 +31,30 @@ window.Capture = class Capture
     for stream in @streams
       if (not client or stream.src.ip is client) and (not server or stream.dst.address is server)
         filtered.streams.push(stream)
-    filtered.first_packet = @first_packet # TODO
-    filtered.last_packet = @last_packet # TODO
     return filtered
+
+  packets: ->
+    packets = _.flatten(transaction.packets for transaction in stream.transactions for stream in @streams)
+    return _.sortBy packets, (packet) -> packet.timestamp
 
   packets_in: ->
     packets = _.flatten(transaction.packets_in for transaction in stream.transactions for stream in @streams)
     return _.sortBy packets, (packet) -> packet.timestamp
+
+  packets_out: ->
+    packets = _.flatten(transaction.packets_out for transaction in stream.transactions for stream in @streams)
+    return _.sortBy packets, (packet) -> packet.timestamp
+
+  first_packet: ->
+    @packets()[0]
+
+  last_packet: ->
+    packets = @packets()
+    return packets[packets.length - 1]
+
+  begin: (bandwidth) -> packet_begin @first_packet(), bandwidth
+  end: -> @last_packet().timestamp
+  duration: (bandwidth) -> @end() - @begin(bandwidth)
 
   bandwidth: ->
     packets = @packets_in()

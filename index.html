@@ -24,18 +24,13 @@
             padding-top: 40px;
             background-color: black;
         }
-        #canvas {
-            border: 1px solid grey;
-            margin-right: 5px;
-            visibility: hidden;
-        }
         #options {
             position: absolute;
             top: 35px;
             left: auto;
             right: 20px;
             max-width: none;
-            width: 228px;
+            width: 270px;
             margin-top: 10px;
             float: right;
         }
@@ -47,7 +42,7 @@
             text-align: center;
         }
         #options .popover-content input, #options .popover-content select {
-            width: 200px;
+            width: 242px;
         }
         #options .network-arrow {
             font-size: 16px;
@@ -60,14 +55,6 @@
         #loading {
             margin-right: 0.5em;
             display: none;
-        }
-
-        #stripes-container {
-
-        }
-
-        #stripes-container svg {
-            width: 100%;
         }
     </style>
 </head>
@@ -104,6 +91,22 @@
                                 <option>domain</option>
                                 <option>content-type</option>
                             </select>
+
+                            <label style="margin-top: 30px;">Width</label>
+                            <div class="input-append">
+                                <input disabled id="time-input" style="width: 2em;" type="text">
+                                <span class="add-on">s</span>
+                            </div>
+                            ×
+                            <div class="input-append">
+                                <input id="width-s-input" style="width: 1.8em;" type="text">
+                                <span class="add-on">px</span>
+                            </div>
+                            =
+                            <div class="input-append">
+                                <input id="width-input" style="width: 2.4em;" type="text">
+                                <span class="add-on">px</span>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -160,11 +163,12 @@
     </div>
 
     <script>
-        $('#stripes-container>svg').attr('width', $(document).width() + 'px')
+        var width = $(document).width()
+        $('#stripes-container>svg').attr('width', width + 'px')
 
         var stripes = new Stripes(document.getElementById('stripes-container').children[0])
 
-        var capture, filtered_capture, color_by = 'stream', bandwidth
+        var capture, filtered_capture, color_by = 'stream', bandwidth, duration
 
         function draw() {
             stripes.draw(filtered_capture, bandwidth, color_by)
@@ -177,6 +181,7 @@
             var kbit = filtered_capture.bandwidth() * 0.95
             $('#bandwidth-input').val(Math.round(kbit))
             bandwidth = kbit * 1000 / 8
+            duration = filtered_capture.duration(bandwidth)
         }
 
         function options(dropdown, options) {
@@ -203,6 +208,9 @@
 
                 options($('#client-dropdown'), ['any client'].concat(capture.clients()))
                 options($('#server-dropdown'), ['any server'].concat(capture.servers()))
+                $('#time-input').val(Math.round(duration*10)/10)
+                $('#width-input').val(Math.round(width))
+                $('#width-s-input').val(Math.round(width / duration))
                 $('#options-toggle').prop('disabled', false)
                 $('#download-button').prop('disabled', false)
                 $('#loading').hide()
@@ -228,6 +236,15 @@
         $('#bandwidth-input').change(function() {
             bandwidth = Number(this.value) * 1000 / 8
             draw()
+        })
+
+        $('#width-input').change(function() {
+            $('#stripes-container>svg').attr('width', this.value + 'px')
+            $('#width-s-input').val(Math.round(this.value / duration))
+        })
+
+        $('#width-s-input').change(function() {
+            $('#width-input').val(Math.round(this.value * duration)).change()
         })
 
         var clients_dropdown = document.getElementById('client-dropdown')

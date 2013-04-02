@@ -25,14 +25,13 @@
     };
 
     Stripes.prototype.draw = function(capture, bandwidth, color_by) {
-      var as, bars, capture_begin, capture_end, color, color_id, content_colors, content_type, domain_colors, draw_packets, duration, em, next_color, packets, scale, stream, streams, transaction, transaction_colors, transaction_y, transactions, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+      var as, bars, capture_begin, color, color_id, content_colors, content_type, domain_colors, draw_packets, duration, em, next_color, packets, scale, stream, streams, transaction, transaction_colors, transaction_y, transactions, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
       packets = capture.packets_in();
       duration = function(packet) {
         return packet.size / bandwidth;
       };
-      capture_begin = capture.first_packet.timestamp - duration(capture.first_packet);
-      capture_end = capture.last_packet.timestamp;
-      scale = d3.scale.linear().domain([0, capture_end - capture_begin]).range(['0%', '100%']);
+      capture_begin = capture.begin(bandwidth);
+      scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
       transaction_colors = {};
       color_id = 0;
       next_color = function() {

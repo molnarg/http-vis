@@ -39,11 +39,10 @@ window.Stripes = class Stripes
 
     # Placement
     duration = (packet) -> packet.size / bandwidth
-    capture_begin = capture.first_packet.timestamp - duration(capture.first_packet)
-    capture_end = capture.last_packet.timestamp
+    capture_begin = capture.begin(bandwidth)
 
     scale = d3.scale.linear()
-      .domain([0, capture_end - capture_begin])
+      .domain([0, capture.end() - capture_begin])
       .range(['0%', '100%'])
 
     # Color
