@@ -108,7 +108,9 @@
         return stripes.exit().remove();
       };
       draw_packets(this.svg.selectAll('rect.packet').data(packets), 0, '100%');
-      transactions = capture.transactions();
+      transactions = capture.transactions().filter(function(t) {
+        return (t.request && t.response) || console.error('incomplete transaction:', t);
+      });
       streams = capture.streams.filter(function(stream) {
         return stream.transactions.length !== 0;
       });

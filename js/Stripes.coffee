@@ -93,7 +93,7 @@ window.Stripes = class Stripes
     draw_packets @svg.selectAll('rect.packet').data(packets), 0, '100%'
 
     # Drawing transactions
-    transactions = capture.transactions()
+    transactions = capture.transactions().filter (t) -> (t.request and t.response) or console.error('incomplete transaction:', t)
     streams = capture.streams.filter (stream) -> stream.transactions.length isnt 0
     transaction_y = (transaction) -> 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
 
