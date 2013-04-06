@@ -14,8 +14,6 @@ window.Palette = class Palette
     [357, 100, 39]
     [337, 92, 46]
     [141, 95, 46]
-    [357, 0, 60]
-    [357, 0, 15]
   ]
   palette = palette.map (color) -> d3.hsl(color[0], color[1]/100, color[2]/100).toString()
 
