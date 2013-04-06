@@ -8,7 +8,9 @@ window.Histogram = class Histogram
     duration = end - begin
     intervals = Math.floor(duration / interval)
 
-    data = d3.layout.stack() capture.transactions().map (transaction) ->
+    transactions = _.sortBy capture.transactions(), (transaction) -> palette.color(transaction).toString()
+
+    data = d3.layout.stack() transactions.map (transaction) ->
       traffic = ({x, y:0} for x in [0..intervals])
       transaction.packets_in.forEach (packet) -> traffic[Math.floor((packet.timestamp - begin) / interval)].y += packet.size
       traffic.transaction = transaction

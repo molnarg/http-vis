@@ -9,12 +9,15 @@
     }
 
     Histogram.prototype.draw = function(capture, palette, interval) {
-      var begin, data, duration, end, intervals, rect, scale_x, scale_y, stream;
+      var begin, data, duration, end, intervals, rect, scale_x, scale_y, stream, transactions;
       begin = capture.first_packet().timestamp;
       end = capture.last_packet().timestamp;
       duration = end - begin;
       intervals = Math.floor(duration / interval);
-      data = d3.layout.stack()(capture.transactions().map(function(transaction) {
+      transactions = _.sortBy(capture.transactions(), function(transaction) {
+        return palette.color(transaction).toString();
+      });
+      data = d3.layout.stack()(transactions.map(function(transaction) {
         var traffic, x;
         traffic = (function() {
           var _i, _results;
