@@ -15,6 +15,7 @@
 
     <script src="js/Capture.js"></script>
     <script src="js/Stripes.js"></script>
+    <script src="js/Histogram.js"></script>
 
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap-responsive.css">
@@ -55,6 +56,10 @@
         #loading {
             margin-right: 0.5em;
             display: none;
+        }
+
+        #histogram-container svg {
+            height: 200px;
         }
     </style>
 </head>
@@ -120,6 +125,11 @@
         </div>
     </div>
 
+    <div id="histogram-container">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+        </svg>
+    </div>
+
     <div id="stripes-container">
         <!--
         <?xml version="1.0" encoding="UTF-8" ?>
@@ -165,13 +175,16 @@
     <script>
         var width = $(document).width()
         $('#stripes-container>svg').attr('width', width + 'px')
+        $('#histogram-container>svg').attr('width', width + 'px')
 
-        var stripes = new Stripes(document.getElementById('stripes-container').children[0])
+        var stripes = new Stripes($('#stripes-container>svg')[0])
+        var stacked = new Histogram($('#histogram-container>svg')[0])
 
         var capture, filtered_capture, color_by = 'stream', bandwidth, duration
 
         function draw() {
             stripes.draw(filtered_capture, bandwidth, color_by)
+            stacked.draw(filtered_capture, 0.1)
         }
 
         function filter(client, server) {
