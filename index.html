@@ -16,6 +16,7 @@
     <script src="js/Capture.js"></script>
     <script src="js/Stripes.js"></script>
     <script src="js/Histogram.js"></script>
+    <script src="js/Palette.js"></script>
 
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap-responsive.css">
@@ -180,11 +181,11 @@
         var stripes = new Stripes($('#stripes-container>svg')[0])
         var stacked = new Histogram($('#histogram-container>svg')[0])
 
-        var capture, filtered_capture, color_by = 'stream', bandwidth, duration
+        var capture, filtered_capture, palette, color_by = 'stream', bandwidth, duration
 
         function draw() {
-            stripes.draw(filtered_capture, bandwidth, color_by)
-            stacked.draw(filtered_capture, 0.1)
+            stripes.draw(filtered_capture, palette, bandwidth)
+            stacked.draw(filtered_capture, palette, 0.1)
         }
 
         function filter(client, server) {
@@ -195,6 +196,7 @@
             $('#bandwidth-input').val(Math.round(kbit))
             bandwidth = kbit * 1000 / 8
             duration = filtered_capture.duration(bandwidth)
+            palette = new Palette(filtered_capture, color_by)
         }
 
         function options(dropdown, options) {
@@ -243,6 +245,7 @@
 
         $('#color-dropdown').change(function() {
             color_by = this.selectedOptions[0].innerHTML
+            palette = new Palette(filtered_capture, color_by)
             draw()
         })
 

@@ -3,19 +3,12 @@
   var Histogram;
 
   window.Histogram = Histogram = (function() {
-    var palette;
-
-    palette = [[202, 100, 41], [209, 100, 26], [13, 100, 53], [48, 100, 56], [93, 70, 36], [344, 100, 25], [206, 100, 76], [75, 88, 13], [70, 100, 41], [273, 56, 28], [34, 100, 53], [357, 100, 39], [337, 92, 46], [141, 95, 46], [357, 0, 60], [357, 0, 15]];
-
-    palette = palette.map(function(color) {
-      return d3.hsl(color[0], color[1] / 100, color[2] / 100).toString();
-    });
 
     function Histogram(svg) {
       this.svg = d3.select(svg);
     }
 
-    Histogram.prototype.draw = function(capture, interval) {
+    Histogram.prototype.draw = function(capture, palette, interval) {
       var begin, data, duration, end, intervals, rect, scale_x, scale_y, stream;
       begin = capture.first_packet().timestamp;
       end = capture.last_packet().timestamp;
@@ -37,6 +30,7 @@
         transaction.packets_in.forEach(function(packet) {
           return traffic[Math.floor((packet.timestamp - begin) / interval)].y += packet.size;
         });
+        traffic.transaction = transaction;
         return traffic;
       }));
       scale_x = d3.scale.linear().range([0, 100]).domain([0, intervals]);
@@ -46,7 +40,7 @@
         })
       ]);
       stream = this.svg.selectAll("g.stream").data(data).enter().append("svg:g").attr("class", "stream").style("fill", function(d, i) {
-        return palette[i % palette.length];
+        return palette.color(d.transaction);
       });
       return rect = stream.selectAll("rect").data(Object).enter().append("svg:rect").attr("x", function(d) {
         return scale_x(d.x) + '%';

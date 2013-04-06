@@ -3,13 +3,7 @@
   var Stripes;
 
   window.Stripes = Stripes = (function() {
-    var margin, palette;
-
-    palette = [[202, 100, 41], [209, 100, 26], [13, 100, 53], [48, 100, 56], [93, 70, 36], [344, 100, 25], [206, 100, 76], [75, 88, 13], [70, 100, 41], [273, 56, 28], [34, 100, 53], [357, 100, 39], [337, 92, 46], [141, 95, 46], [357, 0, 60], [357, 0, 15]];
-
-    palette = palette.map(function(color) {
-      return d3.hsl(color[0], color[1] / 100, color[2] / 100).toString();
-    });
+    var margin;
 
     margin = 0.1;
 
@@ -24,78 +18,14 @@
       return false;
     };
 
-    Stripes.prototype.draw = function(capture, bandwidth, color_by) {
-      var as, bars, capture_begin, color, color_id, content_colors, content_type, domain_colors, draw_packets, duration, em, next_color, packets, scale, stream, streams, transaction, transaction_colors, transaction_y, transactions, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+    Stripes.prototype.draw = function(capture, palette, bandwidth) {
+      var as, bars, capture_begin, draw_packets, duration, em, packets, scale, streams, transaction_y, transactions;
       packets = capture.packets_in();
       duration = function(packet) {
         return packet.size / bandwidth;
       };
       capture_begin = capture.begin(bandwidth);
       scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
-      transaction_colors = {};
-      color_id = 0;
-      next_color = function() {
-        color_id += 1;
-        return palette[(color_id - 1) % palette.length];
-      };
-      switch (color_by) {
-        case 'stream':
-          _ref = capture.streams;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            stream = _ref[_i];
-            color = next_color();
-            _ref1 = stream.transactions;
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              transaction = _ref1[_j];
-              transaction_colors[transaction.id] = color;
-            }
-          }
-          break;
-        case 'domain':
-          domain_colors = {};
-          _ref2 = capture.streams;
-          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-            stream = _ref2[_k];
-            if ((_ref3 = domain_colors[_name = stream.domain]) == null) {
-              domain_colors[_name] = next_color();
-            }
-            color = domain_colors[stream.domain];
-            _ref4 = stream.transactions;
-            for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-              transaction = _ref4[_l];
-              transaction_colors[transaction.id] = color;
-            }
-          }
-          break;
-        case 'content-type':
-          content_colors = {};
-          _ref5 = capture.streams;
-          for (_m = 0, _len4 = _ref5.length; _m < _len4; _m++) {
-            stream = _ref5[_m];
-            _ref6 = stream.transactions;
-            for (_n = 0, _len5 = _ref6.length; _n < _len5; _n++) {
-              transaction = _ref6[_n];
-              content_type = transaction.response.headers['content-type'];
-              if (content_type != null ? content_type.match(/javascript/) : void 0) {
-                content_type = 'javascript';
-              }
-              if (content_type != null ? content_type.match(/image/) : void 0) {
-                content_type = 'image';
-              }
-              if (content_type != null ? content_type.match(/html/) : void 0) {
-                content_type = 'html';
-              }
-              if ((_ref7 = content_colors[content_type]) == null) {
-                content_colors[content_type] = next_color();
-              }
-              color = content_colors[content_type];
-              transaction_colors[transaction.id] = color;
-            }
-          }
-      }
-      color = function(packet) {
-        return transaction_colors[packet.transaction.id];
-      };
       draw_packets = function(stripes, y, height) {
         stripes.enter().append('rect').attr('class', 'packet').attr('y', y).attr('height', height).attr('packet-id', function(packet) {
           return packet.id;
@@ -104,7 +34,9 @@
           return scale(packet.timestamp - duration(packet) - capture_begin);
         }).attr('width', function(packet) {
           return scale(duration(packet));
-        }).attr('fill', color);
+        }).attr('fill', function(packet) {
+          return palette.color(packet.transaction);
+        });
         return stripes.exit().remove();
       };
       draw_packets(this.svg.selectAll('rect.packet').data(packets), 0, '100%');
