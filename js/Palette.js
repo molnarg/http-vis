@@ -8,7 +8,7 @@
     palette = [[202, 100, 41], [209, 100, 26], [13, 100, 53], [48, 100, 56], [93, 70, 36], [344, 100, 25], [206, 100, 76], [75, 88, 13], [70, 100, 41], [273, 56, 28], [34, 100, 53], [357, 100, 39], [337, 92, 46], [141, 95, 46]];
 
     palette = palette.map(function(color) {
-      return d3.hsl(color[0], color[1] / 100, color[2] / 100).toString();
+      return d3.hsl(color[0], color[1] / 100, color[2] / 100);
     });
 
     Palette.prototype.next_color = function() {

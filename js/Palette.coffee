@@ -15,7 +15,7 @@ window.Palette = class Palette
     [337, 92, 46]
     [141, 95, 46]
   ]
-  palette = palette.map (color) -> d3.hsl(color[0], color[1]/100, color[2]/100).toString()
+  palette = palette.map (color) -> d3.hsl(color[0], color[1]/100, color[2]/100)
 
   next_color: ->
     @color_id += 1
