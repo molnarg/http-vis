@@ -288,12 +288,16 @@
       this.packets_in = [];
       this.packets_out = [];
       connection.on('data', function(buffer, packet) {
+        var _ref;
         packet.transaction = _this;
         _this.packets.push(packet);
         if (packet.ipv4.src.toString() === connection.a.ip && packet.tcp.srcport === connection.a.port) {
           return _this.packets_out.push(packet);
         } else {
-          return _this.packets_in.push(packet);
+          _this.packets_in.push(packet);
+          if (packet.tcp.payload.size > 0) {
+            return (_ref = _this.response_first_packet) != null ? _ref : _this.response_first_packet = packet;
+          }
         }
       });
       ab.on('data', function(dv, chunk) {
@@ -357,7 +361,7 @@
     };
 
     Transaction.prototype.response_first = function() {
-      return this.packets_in[this.packets_in.indexOf(this.request_ack) + 1];
+      return this.response_first_packet;
     };
 
     Transaction.prototype.response_last = function() {

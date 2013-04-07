@@ -127,6 +127,7 @@ class Transaction
         @packets_out.push packet
       else
         @packets_in.push packet
+        @response_first_packet ?= packet if packet.tcp.payload.size > 0
 
     ab.on 'data', (dv, chunk) =>
       # @request_first_packet is not always contained in @packets_out and @packets, because it may be an ack to
@@ -151,7 +152,7 @@ class Transaction
   request_end: -> @request_last().timestamp
   request_duration: (bandwidth) -> @request_end() - @request_begin(bandwidth)
 
-  response_first: -> @packets_in[@packets_in.indexOf(@request_ack) + 1]
+  response_first: -> @response_first_packet #@packets_in[@packets_in.indexOf(@request_ack) + 1]
   response_last: -> @packets_in[@packets_in.length - 1]
   response_begin: (bandwidth) -> packet_begin @response_first(), bandwidth
   response_end: -> @response_last().timestamp

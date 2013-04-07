@@ -66,7 +66,7 @@ window.Stripes = class Stripes
     bars.select('rect.request')
       .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin))
       .attr('y',     (t, id) -> transaction_y(t) + 'em')
-      .attr('width', (t, id) -> scale(t.request_duration(bandwidth)))
+      .attr('width', (t, id) -> scale(t.response_begin(bandwidth) - t.request_begin(bandwidth)))
     #bars.select('rect.response')
     #  .attr('x',     (t, id) -> scale(t.response_begin(bandwidth) - capture_begin))
     #  .attr('y',     (t, id) -> transaction_y(t) + 'em')

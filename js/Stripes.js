@@ -72,7 +72,7 @@
       }).attr('y', function(t, id) {
         return transaction_y(t) + 'em';
       }).attr('width', function(t, id) {
-        return scale(t.request_duration(bandwidth));
+        return scale(t.response_begin(bandwidth) - t.request_begin(bandwidth));
       });
       bars.exit().remove();
       em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
