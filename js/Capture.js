@@ -306,7 +306,10 @@
         return _this.request_ack = _this.packets_in[_this.packets_in.length - 1];
       };
       res_parser.onHeadersComplete = function(info) {
-        return _this.response = parse_headers(info);
+        _this.response = parse_headers(info);
+        if (!('transfer-encoding' in _this.response.headers) && !('content-length' in _this.response.headers)) {
+          return res_parser.onMessageComplete();
+        }
       };
       this.packets = [];
       this.packets_in = [];

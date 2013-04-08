@@ -131,6 +131,7 @@ class Transaction
       @request_ack = @packets_in[@packets_in.length - 1]
     res_parser.onHeadersComplete = (info) =>
       @response = parse_headers(info)
+      res_parser.onMessageComplete() if 'transfer-encoding' not of @response.headers and 'content-length' not of @response.headers
 
     @packets = []
     @packets_in = []
