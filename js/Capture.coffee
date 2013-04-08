@@ -14,6 +14,7 @@ window.Capture = class Capture
       packet.id = id
       packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
       tcp_tracker.write packet
+    tcp_tracker.end()
 
   clients: ->
     _.uniq (stream.src.ip for stream in @streams when stream.transactions.length isnt 0)
@@ -103,6 +104,20 @@ class Transaction
       info.headers[headers.shift().toLowerCase()] = headers.shift()
     return info
 
+  register_packet: (connection, buffer, packet) ->
+    packet.transaction = @
+    @packets.push packet
+    if packet.ipv4.src.toString() == connection.a.ip and packet.tcp.srcport == connection.a.port
+      @packets_out.push packet
+      if packet.tcp.payload.size > 0
+        @request_first ?= packet
+        @request_last = packet
+    else
+      @packets_in.push packet
+      if packet.tcp.payload.size > 0
+        @response_first ?= packet
+        @response_last = packet
+
   constructor: (@stream, ab, ba, connection, ready) ->
     @id = next_id
     next_id += 1
@@ -120,20 +135,9 @@ class Transaction
     @packets = []
     @packets_in = []
     @packets_out = []
-    connection.on 'data', (buffer, packet) =>
-      packet.transaction = @
-      @packets.push packet
-      if packet.ipv4.src.toString() == connection.a.ip and packet.tcp.srcport == connection.a.port
-        @packets_out.push packet
-      else
-        @packets_in.push packet
-        @response_first_packet ?= packet if packet.tcp.payload.size > 0
+    connection.on 'data', @register_packet.bind(@, connection)
 
-    ab.on 'data', (dv, chunk) =>
-      # @request_first_packet is not always contained in @packets_out and @packets, because it may be an ack to
-      # a previous response, so it is in the packets array of that response! That's why @begin() works the way it does.
-      @request_first_packet ?= chunk.parent.parent.parent.parent
-      req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
+    ab.on 'data', (dv) -> req_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ba.on 'data', (dv) -> res_parser.execute new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength
     ab.on 'end', -> req_parser.finish()
     ba.on 'end', -> res_parser.finish()
@@ -141,19 +145,24 @@ class Transaction
     res_parser.onMessageComplete = =>
       stream.removeAllListeners('data') for stream in [connection, ab, ba]
       stream.removeAllListeners('end') for stream in [connection, ab, ba]
-      ready()
+      connection.on 'data', (buffer, packet) =>
+        if packet.tcp.payload.size is 0
+          @register_packet connection, buffer, packet
+        else
+          connection.removeAllListeners(event) for event in ['data', 'end'] # don't listen anymore
+          ready() # give the stream to the new owner
+          connection.emit 'data', buffer, packet # re-emit event for the new owner
+      connection.on 'end', ->
+        connection.removeAllListeners(event) for event in ['data', 'end'] # don't listen anymore
+        ready() # report that we are ready
 
-  begin: (bandwidth) -> Math.min(@request_begin(bandwidth), packet_begin(@packets[0], bandwidth))
+  begin: (bandwidth) -> packet_begin(@packets[0], bandwidth)
   end: -> packets[packets.length - 1].timestamp
 
-  request_first: -> @request_first_packet
-  request_last: -> @request_ack
-  request_begin: (bandwidth) -> packet_begin @request_first(), bandwidth
-  request_end: -> @request_last().timestamp
+  request_begin: (bandwidth) -> packet_begin @request_first, bandwidth
+  request_end: -> @request_last.timestamp
   request_duration: (bandwidth) -> @request_end() - @request_begin(bandwidth)
 
-  response_first: -> @response_first_packet #@packets_in[@packets_in.indexOf(@request_ack) + 1]
-  response_last: -> @packets_in[@packets_in.length - 1]
-  response_begin: (bandwidth) -> packet_begin @response_first(), bandwidth
-  response_end: -> @response_last().timestamp
+  response_begin: (bandwidth) -> packet_begin @response_first, bandwidth
+  response_end: -> @response_last.timestamp
   response_duration: (bandwidth) -> @response_end() - @response_begin(bandwidth)

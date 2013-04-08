@@ -26,6 +26,7 @@
         packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000;
         return tcp_tracker.write(packet);
       });
+      tcp_tracker.end();
     }
 
     Capture.prototype.clients = function() {
@@ -266,6 +267,29 @@
       return info;
     };
 
+    Transaction.prototype.register_packet = function(connection, buffer, packet) {
+      var _ref, _ref1;
+      packet.transaction = this;
+      this.packets.push(packet);
+      if (packet.ipv4.src.toString() === connection.a.ip && packet.tcp.srcport === connection.a.port) {
+        this.packets_out.push(packet);
+        if (packet.tcp.payload.size > 0) {
+          if ((_ref = this.request_first) == null) {
+            this.request_first = packet;
+          }
+          return this.request_last = packet;
+        }
+      } else {
+        this.packets_in.push(packet);
+        if (packet.tcp.payload.size > 0) {
+          if ((_ref1 = this.response_first) == null) {
+            this.response_first = packet;
+          }
+          return this.response_last = packet;
+        }
+      }
+    };
+
     function Transaction(stream, ab, ba, connection, ready) {
       var req_parser, res_parser,
         _this = this;
@@ -287,24 +311,8 @@
       this.packets = [];
       this.packets_in = [];
       this.packets_out = [];
-      connection.on('data', function(buffer, packet) {
-        var _ref;
-        packet.transaction = _this;
-        _this.packets.push(packet);
-        if (packet.ipv4.src.toString() === connection.a.ip && packet.tcp.srcport === connection.a.port) {
-          return _this.packets_out.push(packet);
-        } else {
-          _this.packets_in.push(packet);
-          if (packet.tcp.payload.size > 0) {
-            return (_ref = _this.response_first_packet) != null ? _ref : _this.response_first_packet = packet;
-          }
-        }
-      });
-      ab.on('data', function(dv, chunk) {
-        var _ref;
-        if ((_ref = _this.request_first_packet) == null) {
-          _this.request_first_packet = chunk.parent.parent.parent.parent;
-        }
+      connection.on('data', this.register_packet.bind(this, connection));
+      ab.on('data', function(dv) {
         return req_parser.execute(new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength), 0, dv.byteLength);
       });
       ba.on('data', function(dv) {
@@ -328,52 +336,58 @@
           stream = _ref1[_j];
           stream.removeAllListeners('end');
         }
-        return ready();
+        connection.on('data', function(buffer, packet) {
+          var event, _k, _len2, _ref2;
+          if (packet.tcp.payload.size === 0) {
+            return _this.register_packet(connection, buffer, packet);
+          } else {
+            _ref2 = ['data', 'end'];
+            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+              event = _ref2[_k];
+              connection.removeAllListeners(event);
+            }
+            ready();
+            return connection.emit('data', buffer, packet);
+          }
+        });
+        return connection.on('end', function() {
+          var event, _k, _len2, _ref2;
+          _ref2 = ['data', 'end'];
+          for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+            event = _ref2[_k];
+            connection.removeAllListeners(event);
+          }
+          return ready();
+        });
       };
     }
 
     Transaction.prototype.begin = function(bandwidth) {
-      return Math.min(this.request_begin(bandwidth), packet_begin(this.packets[0], bandwidth));
+      return packet_begin(this.packets[0], bandwidth);
     };
 
     Transaction.prototype.end = function() {
       return packets[packets.length - 1].timestamp;
     };
 
-    Transaction.prototype.request_first = function() {
-      return this.request_first_packet;
-    };
-
-    Transaction.prototype.request_last = function() {
-      return this.request_ack;
-    };
-
     Transaction.prototype.request_begin = function(bandwidth) {
-      return packet_begin(this.request_first(), bandwidth);
+      return packet_begin(this.request_first, bandwidth);
     };
 
     Transaction.prototype.request_end = function() {
-      return this.request_last().timestamp;
+      return this.request_last.timestamp;
     };
 
     Transaction.prototype.request_duration = function(bandwidth) {
       return this.request_end() - this.request_begin(bandwidth);
     };
 
-    Transaction.prototype.response_first = function() {
-      return this.response_first_packet;
-    };
-
-    Transaction.prototype.response_last = function() {
-      return this.packets_in[this.packets_in.length - 1];
-    };
-
     Transaction.prototype.response_begin = function(bandwidth) {
-      return packet_begin(this.response_first(), bandwidth);
+      return packet_begin(this.response_first, bandwidth);
     };
 
     Transaction.prototype.response_end = function() {
-      return this.response_last().timestamp;
+      return this.response_last.timestamp;
     };
 
     Transaction.prototype.response_duration = function(bandwidth) {

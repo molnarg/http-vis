@@ -1951,14 +1951,14 @@ function TCPConnection(a, b) {
   a.stream = new Stream()
   a.stream.readable = true
   a.stream.connection = this
-  a.unacknowledged = {}
   a.fin = false
+  a.seq = null
 
   b.stream = new Stream()
   b.stream.readable = true
   b.stream.connection = this
-  b.unacknowledged = {}
   b.fin = false
+  b.seq = null
 
   this.a = a
   this.b = b
@@ -1967,7 +1967,7 @@ function TCPConnection(a, b) {
 
 util.inherits(TCPConnection, Stream)
 
-TCPConnection.prototype.process = function(packet) {
+TCPConnection.prototype.write = function(packet) {
   if (this.ended) return
   this.emit('data', packet.data, packet)
 
@@ -1977,38 +1977,30 @@ TCPConnection.prototype.process = function(packet) {
     , dst = (src === this.a) ? this.b : this.a
     , payload = tcp.payload
 
-  // Store the sent content until it is acknowledged
+  // Emitting the received content if is not duplicate  TODO: check checksum
   if (payload.size !== 0) {
-    src.unacknowledged[tcp.seq] = payload
-  }
-
-  // Emitting acknowledged data
-  var chunk, last, ack = tcp.ack
-  for (var seq in dst.unacknowledged) {
-    if (!dst.unacknowledged.hasOwnProperty(seq)) continue
-
-    chunk = dst.unacknowledged[seq]
-    last = Number(seq) + chunk.size - 1
-
-    if (last < ack) {
-      delete dst.unacknowledged[seq]
-      dst.stream.emit('data', chunk.data, chunk)
+    if (src.seq === null) src.seq = tcp.seq
+    if (tcp.seq === src.seq) {
+      src.seq += payload.size
+      src.stream.emit('data', payload.data, payload)
     }
   }
 
   // Ending the streams and the connection
   if (tcp.flags.fin) src.fin = true
 
-  if (Object.keys(dst.unacknowledged).length === 0 && dst.fin) {
+  if (dst.fin) {
     if (!dst.stream.ended) (dst.stream.ended = true) && dst.stream.emit('end')
     if (!this.ended && src.stream.ended) (this.ended = true) && this.emit('end')
   }
 
-  if (tcp.flags.reset) {
-    if (!dst.stream.ended) (dst.stream.ended = true) && dst.stream.emit('end')
-    if (!src.stream.ended) (src.stream.ended = true) && src.stream.emit('end')
-    if (!this.ended) (this.ended = true) && this.emit('end')
-  }
+  if (tcp.flags.reset) this.end()
+}
+
+TCPConnection.prototype.end = function() {
+  if (!this.a.stream.ended) (this.a.stream.ended = true) && this.a.stream.emit('end')
+  if (!this.b.stream.ended) (this.b.stream.ended = true) && this.b.stream.emit('end')
+  if (!this.ended) (this.ended = true) && this.emit('end')
 }
 
 TCPConnection.prototype.toString = function() {
@@ -2041,11 +2033,12 @@ TCPDemux.prototype.write = function (packet) {
     this.emit('connection', connection.a.stream, connection.b.stream, connection)
   }
 
-  connection.process(packet)
+  connection.write(packet)
 }
 
 TCPDemux.prototype.end = function (packet) {
   if (packet) this.write(packet)
+  for (var key in this.connections) this.connections[key].end()
 }
 
 module.exports = function() {
