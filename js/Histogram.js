@@ -27,14 +27,14 @@
           _ref = transaction.packets_in;
           for (_j = 0, _len = _ref.length; _j < _len; _j++) {
             packet = _ref[_j];
-            packet_duration = packet.size / bandwidth;
+            packet_duration = packet.ethernet.byteLength / bandwidth;
             packet_end = packet.timestamp - begin;
             packet_begin = packet_end - packet_duration;
             if (packet_end < interval_begin || packet_begin > interval_end) {
               continue;
             }
             packet_interval_duration = Math.min(packet_end, interval_end) - Math.max(packet_begin, interval_begin);
-            interval_data += packet.size * packet_interval_duration / packet_duration;
+            interval_data += packet.ethernet.byteLength * packet_interval_duration / packet_duration;
           }
           _results.push({
             x: i,

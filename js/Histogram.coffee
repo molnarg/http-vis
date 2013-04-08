@@ -17,12 +17,12 @@ window.Histogram = class Histogram
         interval_data = 0
 
         for packet in transaction.packets_in
-          packet_duration = packet.size / bandwidth
+          packet_duration = packet.ethernet.byteLength / bandwidth
           packet_end = packet.timestamp - begin
           packet_begin = packet_end - packet_duration
           continue if packet_end < interval_begin or packet_begin > interval_end
           packet_interval_duration = Math.min(packet_end, interval_end) - Math.max(packet_begin, interval_begin)
-          interval_data += packet.size * packet_interval_duration / packet_duration
+          interval_data += packet.ethernet.byteLength * packet_interval_duration / packet_duration
 
         {x: i, y: interval_data}
 
