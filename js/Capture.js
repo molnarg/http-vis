@@ -192,14 +192,14 @@
     Capture.prototype.bandwidth = function() {
       var current_bandwidth, max_bandwidth, packets, window_begin, window_bytes, window_end, window_size, _i, _ref;
       packets = this.packets_in();
-      window_size = 0.4;
+      window_size = 0.3;
       window_begin = 0;
       window_bytes = 0;
       max_bandwidth = 0;
       for (window_end = _i = 0, _ref = packets.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; window_end = 0 <= _ref ? ++_i : --_i) {
-        window_bytes += packets[window_end].size;
+        window_bytes += packets[window_end].ethernet.byteLength;
         while (window_size < packets[window_end].timestamp - packets[window_begin].timestamp) {
-          window_bytes -= packets[window_begin].size;
+          window_bytes -= packets[window_begin].ethernet.byteLength;
           window_begin += 1;
         }
         if (window_begin === 0) {

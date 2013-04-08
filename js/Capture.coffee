@@ -58,16 +58,16 @@ window.Capture = class Capture
 
   bandwidth: ->
     packets = @packets_in()
-    window_size = 0.4
+    window_size = 0.3
     window_begin = 0
     window_bytes = 0
     max_bandwidth = 0
 
     for window_end in [0..packets.length - 1]
-      window_bytes += packets[window_end].size
+      window_bytes += packets[window_end].ethernet.byteLength
 
       while window_size < packets[window_end].timestamp - packets[window_begin].timestamp
-        window_bytes -= packets[window_begin].size
+        window_bytes -= packets[window_begin].ethernet.byteLength
         window_begin += 1
 
       if window_begin is 0 then continue

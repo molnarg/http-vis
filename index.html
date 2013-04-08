@@ -192,7 +192,7 @@
             if (client === 'any client') client = undefined
             if (server === 'any server') server = undefined
             filtered_capture = capture.filter(client, server)
-            var kbit = filtered_capture.bandwidth() * 0.95
+            var kbit = filtered_capture.bandwidth()
             $('#bandwidth-input').val(Math.round(kbit))
             bandwidth = kbit * 1000 / 8
             duration = filtered_capture.duration(bandwidth)
