@@ -60,7 +60,7 @@
         }
 
         #histogram-container svg {
-            height: 200px;
+            height: 100px;
         }
     </style>
 </head>
@@ -256,6 +256,7 @@
 
         $('#width-input').change(function() {
             $('#stripes-container>svg').attr('width', this.value + 'px')
+            $('#histogram-container>svg').attr('width', this.value + 'px')
             $('#width-s-input').val(Math.round(this.value / duration))
         })
 

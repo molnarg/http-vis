@@ -42,16 +42,20 @@
           return d.y0 + d.y;
         })
       ]);
-      stream = this.svg.selectAll("g.stream").data(data).enter().append("svg:g").attr("class", "stream").style("fill", function(d, i) {
+      stream = this.svg.selectAll("g.stream").data(data);
+      stream.enter().append("svg:g").attr("class", "stream");
+      stream.style("fill", function(d) {
         return palette.color(d.transaction);
       });
-      return rect = stream.selectAll("rect").data(Object).enter().append("svg:rect").attr("x", function(d) {
+      rect = stream.selectAll("rect.area").data(Object);
+      rect.enter().append("svg:rect").attr("class", "area").attr("x", function(d) {
         return scale_x(d.x) + '%';
-      }).attr("y", function(d) {
+      }).attr("width", 100 / intervals + '%');
+      return rect.attr("y", function(d) {
         return 100 - scale_y(d.y0 + d.y) + '%';
       }).attr("height", function(d) {
         return scale_y(d.y) + '%';
-      }).attr("width", 100 / intervals + '%');
+      });
     };
 
     return Histogram;
