@@ -2,19 +2,29 @@ window.Histogram = class Histogram
   constructor: (svg) ->
     @svg = d3.select(svg)
 
-  draw: (capture, palette, interval) ->
-    begin = capture.first_packet().timestamp
-    end = capture.last_packet().timestamp
+  draw: (capture, palette, bandwidth, intervals) ->
+    begin = capture.begin(bandwidth)
+    end = capture.end()
     duration = end - begin
-    intervals = Math.floor(duration / interval)
+    interval = duration / intervals
 
     transactions = _.sortBy capture.transactions(), (transaction) -> palette.color(transaction).toString()
 
     data = d3.layout.stack() transactions.map (transaction) ->
-      traffic = ({x, y:0} for x in [0..intervals])
-      transaction.packets_in.forEach (packet) -> traffic[Math.floor((packet.timestamp - begin) / interval)].y += packet.size
-      traffic.transaction = transaction
-      return traffic
+      for i in [0..intervals]
+        interval_begin = i * interval
+        interval_end = interval_begin + interval
+        interval_data = 0
+
+        for packet in transaction.packets_in
+          packet_duration = packet.size / bandwidth
+          packet_end = packet.timestamp - begin
+          packet_begin = packet_end - packet_duration
+          continue if packet_end < interval_begin or packet_begin > interval_end
+          packet_interval_duration = Math.min(packet_end, interval_end) - Math.max(packet_begin, interval_begin)
+          interval_data += packet.size * packet_interval_duration / packet_duration
+
+        {x: i, y: interval_data}
 
     scale_x = d3.scale.linear().range([0, 100]).domain([0, intervals])
     scale_y = d3.scale.linear().range([0, 90]).domain([0, d3.max(data[data.length - 1], (d) -> d.y0 + d.y)])
@@ -23,7 +33,8 @@ window.Histogram = class Histogram
     stream.enter().append("svg:g")
       .attr("class", "stream")
     stream
-      .style("fill", (d) -> palette.color(d.transaction))
+      .style("fill", (d, i) -> palette.color(transactions[i]))
+    stream.exit().remove()
 
     rect = stream.selectAll("rect.area").data(Object)
     rect.enter().append("svg:rect")

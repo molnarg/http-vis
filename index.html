@@ -185,7 +185,7 @@
 
         function draw() {
             stripes.draw(filtered_capture, palette, bandwidth)
-            stacked.draw(filtered_capture, palette, 0.1)
+            stacked.draw(filtered_capture, palette, bandwidth, 125)
         }
 
         function filter(client, server) {

@@ -8,33 +8,40 @@
       this.svg = d3.select(svg);
     }
 
-    Histogram.prototype.draw = function(capture, palette, interval) {
-      var begin, data, duration, end, intervals, rect, scale_x, scale_y, stream, transactions;
-      begin = capture.first_packet().timestamp;
-      end = capture.last_packet().timestamp;
+    Histogram.prototype.draw = function(capture, palette, bandwidth, intervals) {
+      var begin, data, duration, end, interval, rect, scale_x, scale_y, stream, transactions;
+      begin = capture.begin(bandwidth);
+      end = capture.end();
       duration = end - begin;
-      intervals = Math.floor(duration / interval);
+      interval = duration / intervals;
       transactions = _.sortBy(capture.transactions(), function(transaction) {
         return palette.color(transaction).toString();
       });
       data = d3.layout.stack()(transactions.map(function(transaction) {
-        var traffic, x;
-        traffic = (function() {
-          var _i, _results;
-          _results = [];
-          for (x = _i = 0; 0 <= intervals ? _i <= intervals : _i >= intervals; x = 0 <= intervals ? ++_i : --_i) {
-            _results.push({
-              x: x,
-              y: 0
-            });
+        var i, interval_begin, interval_data, interval_end, packet, packet_begin, packet_duration, packet_end, packet_interval_duration, _i, _j, _len, _ref, _results;
+        _results = [];
+        for (i = _i = 0; 0 <= intervals ? _i <= intervals : _i >= intervals; i = 0 <= intervals ? ++_i : --_i) {
+          interval_begin = i * interval;
+          interval_end = interval_begin + interval;
+          interval_data = 0;
+          _ref = transaction.packets_in;
+          for (_j = 0, _len = _ref.length; _j < _len; _j++) {
+            packet = _ref[_j];
+            packet_duration = packet.size / bandwidth;
+            packet_end = packet.timestamp - begin;
+            packet_begin = packet_end - packet_duration;
+            if (packet_end < interval_begin || packet_begin > interval_end) {
+              continue;
+            }
+            packet_interval_duration = Math.min(packet_end, interval_end) - Math.max(packet_begin, interval_begin);
+            interval_data += packet.size * packet_interval_duration / packet_duration;
           }
-          return _results;
-        })();
-        transaction.packets_in.forEach(function(packet) {
-          return traffic[Math.floor((packet.timestamp - begin) / interval)].y += packet.size;
-        });
-        traffic.transaction = transaction;
-        return traffic;
+          _results.push({
+            x: i,
+            y: interval_data
+          });
+        }
+        return _results;
       }));
       scale_x = d3.scale.linear().range([0, 100]).domain([0, intervals]);
       scale_y = d3.scale.linear().range([0, 90]).domain([
@@ -44,9 +51,10 @@
       ]);
       stream = this.svg.selectAll("g.stream").data(data);
       stream.enter().append("svg:g").attr("class", "stream");
-      stream.style("fill", function(d) {
-        return palette.color(d.transaction);
+      stream.style("fill", function(d, i) {
+        return palette.color(transactions[i]);
       });
+      stream.exit().remove();
       rect = stream.selectAll("rect.area").data(Object);
       rect.enter().append("svg:rect").attr("class", "area").attr("x", function(d) {
         return scale_x(d.x) + '%';
