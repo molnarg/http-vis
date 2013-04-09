@@ -232,10 +232,17 @@
             }
         })
 
-        $('#options-toggle').click(function() {
-            $(this).parent().toggleClass('open')
-            $('#options').toggle()
+        var options_panel = $('#options'), options_toggle = $('#options-toggle')
+        options_toggle.click(function() {
+            options_toggle.parent().toggleClass('open')
+            options_panel.toggle()
             return false
+        })
+        $('body').click(function(event) {
+            if (options_panel.has(event.target).length === 0) {
+                options_panel.hide()
+                options_toggle.parent().removeClass('open')
+            }
         })
 
         $('#download-button').click(function() {
