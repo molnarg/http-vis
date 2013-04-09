@@ -62,13 +62,23 @@
         #histogram-container svg {
             height: 100px;
         }
+
+        .navbar-inner>.container {
+            width: auto;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        #navbar-info {
+            font-family: "Courier New";
+        }
     </style>
 </head>
 
 <body>
     <div class="navbar navbar-fixed-top navbar-inverse">
         <div class="navbar-inner">
-            <div class="container" style="width: auto; padding: 0 20px;">
+            <div class="container">
                 <a class="brand" href="#">http-vis</a>
                 <!--<p class="navbar-text pull-left">Every packet matters.</p>-->
                 <form class="navbar-form pull-right" style="margin-left: 4px;">
@@ -119,8 +129,9 @@
                 <form class="navbar-form pull-right">
                     <input id="file-chooser" type="file">
                 </form>
-                <p id="loading" class="navbar-text">
-                    loading...
+                <p id="navbar-info" class="navbar-text">
+                    <span id="loading">loading...</span>
+                    <span id="time-info"></span>
                 </p>
             </div>
         </div>
@@ -174,12 +185,15 @@
     </div>
 
     <script>
-        var width = $(document).width()
-        $('#stripes-container>svg').attr('width', width + 'px')
-        $('#histogram-container>svg').attr('width', width + 'px')
+        var stripes_svg = $('#stripes-container>svg')
+          , histogram_svg = $('#histogram-container>svg')
 
-        var stripes = new Stripes($('#stripes-container>svg')[0])
-        var stacked = new Histogram($('#histogram-container>svg')[0])
+        var width = $(document).width()
+        stripes_svg.attr('width', width + 'px')
+        histogram_svg.attr('width', width + 'px')
+
+        var stripes = new Stripes(stripes_svg[0])
+        var stacked = new Histogram(histogram_svg[0])
 
         var capture, filtered_capture, palette, color_by = 'stream', bandwidth, duration
 
@@ -262,8 +276,8 @@
         })
 
         $('#width-input').change(function() {
-            $('#stripes-container>svg').attr('width', this.value + 'px')
-            $('#histogram-container>svg').attr('width', this.value + 'px')
+            stripes_svg.attr('width', this.value + 'px')
+            histogram_svg.attr('width', this.value + 'px')
             $('#width-s-input').val(Math.round(this.value / duration))
         })
 
@@ -279,6 +293,15 @@
             filter(selected_client, selected_server)
             draw()
         }
+
+        var time_info = $('#time-info')
+        stripes_svg.mousemove(function(event) {
+            if (!capture) return
+            var begin = capture.first_packet().relative_timestamp
+            var duration = capture.last_packet().timestamp - capture.first_packet().timestamp
+            var timestamp = begin + (event.clientX - stripes_svg.offset().left) * duration / stripes_svg.width()
+            time_info.text(timestamp.toFixed(2) + 's')
+        })
     </script>
 
 </body>

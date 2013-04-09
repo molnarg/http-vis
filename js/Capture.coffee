@@ -7,12 +7,17 @@ window.Capture = class Capture
   constructor: (pcap) ->
     @pcap = new Packet.views.PcapFile(pcap)
     @streams = []
+    @all_packets = []
 
+    begin = undefined
     tcp_tracker = Packet.stream.tcp()
     tcp_tracker.on 'connection', (ab, ba, connection) => @streams.push new Stream(@, ab, ba, connection)
     @pcap.packets.forEach (packet, id) =>
+      @all_packets.push(packet)
       packet.id = id
       packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
+      begin ?= packet.timestamp
+      packet.relative_timestamp = packet.timestamp - begin
       tcp_tracker.write packet
     tcp_tracker.end()
 
@@ -28,6 +33,7 @@ window.Capture = class Capture
   filter: (client, server) ->
     filtered = Object.create Capture.prototype
     filtered.pcap = @pcap
+    filtered.all_packets = @all_packets
     filtered.streams = []
     for stream in @streams
       if (not client or stream.src.ip is client) and (not server or stream.dst.address is server)

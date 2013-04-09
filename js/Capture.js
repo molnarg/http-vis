@@ -13,17 +13,24 @@
   window.Capture = Capture = (function() {
 
     function Capture(pcap) {
-      var tcp_tracker,
+      var begin, tcp_tracker,
         _this = this;
       this.pcap = new Packet.views.PcapFile(pcap);
       this.streams = [];
+      this.all_packets = [];
+      begin = void 0;
       tcp_tracker = Packet.stream.tcp();
       tcp_tracker.on('connection', function(ab, ba, connection) {
         return _this.streams.push(new Stream(_this, ab, ba, connection));
       });
       this.pcap.packets.forEach(function(packet, id) {
+        _this.all_packets.push(packet);
         packet.id = id;
         packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000;
+        if (begin == null) {
+          begin = packet.timestamp;
+        }
+        packet.relative_timestamp = packet.timestamp - begin;
         return tcp_tracker.write(packet);
       });
       tcp_tracker.end();
@@ -79,6 +86,7 @@
       var filtered, stream, _i, _len, _ref;
       filtered = Object.create(Capture.prototype);
       filtered.pcap = this.pcap;
+      filtered.all_packets = this.all_packets;
       filtered.streams = [];
       _ref = this.streams;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
