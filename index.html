@@ -304,7 +304,7 @@
 
         var time_info = $('#time-info')
         stripes.onmousemove = function(time) {
-            time_info.text(time.toFixed(2) + 's')
+            time_info.text(Math.max(0, time).toFixed(2) + 's')
         }
 
         var hide_timeout, packet_info = $('#packet-info'), tcp_info = $('#tcp-info'), http_info = $('#http-info')
