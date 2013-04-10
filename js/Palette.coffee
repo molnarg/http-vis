@@ -17,18 +17,20 @@ window.Palette = class Palette
   ]
   palette = palette.map (color) -> d3.hsl(color[0], color[1]/100, color[2]/100)
 
+  monochrome_color = d3.hsl(0, 0, 0.2)
+
   next_color: ->
     @color_id += 1
     return palette[(@color_id - 1) % palette.length]
 
   color: (transaction) ->
-    @transaction_colors[transaction.id]
+    if @method is 'monochrome' then monochrome_color else @transaction_colors[transaction.id]
 
-  constructor: (capture, method) ->
+  constructor: (capture, @method) ->
     @transaction_colors = {}
     @color_id = 0
 
-    switch method
+    switch @method
       when 'stream'
         for stream in capture.streams
           color = @next_color()

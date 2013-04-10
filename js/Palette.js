@@ -3,7 +3,7 @@
   var Palette;
 
   window.Palette = Palette = (function() {
-    var palette;
+    var monochrome_color, palette;
 
     palette = [[202, 100, 41], [209, 100, 26], [13, 100, 53], [48, 100, 56], [93, 70, 36], [344, 100, 25], [206, 100, 76], [75, 88, 13], [70, 100, 41], [273, 56, 28], [34, 100, 53], [357, 100, 39], [337, 92, 46], [141, 95, 46]];
 
@@ -11,20 +11,27 @@
       return d3.hsl(color[0], color[1] / 100, color[2] / 100);
     });
 
+    monochrome_color = d3.hsl(0, 0, 0.2);
+
     Palette.prototype.next_color = function() {
       this.color_id += 1;
       return palette[(this.color_id - 1) % palette.length];
     };
 
     Palette.prototype.color = function(transaction) {
-      return this.transaction_colors[transaction.id];
+      if (this.method === 'monochrome') {
+        return monochrome_color;
+      } else {
+        return this.transaction_colors[transaction.id];
+      }
     };
 
     function Palette(capture, method) {
       var color, content_colors, content_type, domain_colors, stream, transaction, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+      this.method = method;
       this.transaction_colors = {};
       this.color_id = 0;
-      switch (method) {
+      switch (this.method) {
         case 'stream':
           _ref = capture.streams;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
