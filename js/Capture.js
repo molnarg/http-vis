@@ -144,7 +144,7 @@
   Stream = (function() {
 
     function Stream(capture, ab, ba, connection) {
-      var inprogress, parse_transaction,
+      var add, inprogress, startnew,
         _this = this;
       this.capture = capture;
       this.src = {
@@ -160,16 +160,18 @@
       this.transactions = [];
       this.domain = void 0;
       inprogress = void 0;
-      parse_transaction = function() {
+      add = function() {
         var _ref;
         if ((_ref = _this.domain) == null) {
           _this.domain = inprogress.request.headers.host;
         }
         _this.transactions.push(inprogress);
-        inprogress.id = _this.capture.transactions.push(inprogress) - 1;
-        return inprogress = new Transaction(_this, ab, ba, connection, parse_transaction);
+        return inprogress.id = _this.capture.transactions.push(inprogress) - 1;
       };
-      inprogress = new Transaction(this, ab, ba, connection, parse_transaction);
+      startnew = function() {
+        return inprogress = new Transaction(_this, ab, ba, connection, add, startnew);
+      };
+      startnew();
     }
 
     return Stream;
@@ -212,7 +214,7 @@
       }
     };
 
-    function Transaction(stream, ab, ba, connection, ready) {
+    function Transaction(stream, ab, ba, connection, onbegin, onend) {
       var req_parser, res_parser,
         _this = this;
       this.stream = stream;
@@ -224,7 +226,7 @@
           return;
         }
         _this.request = parse_headers(info);
-        return _this.request_ack = _this.packets_in[_this.packets_in.length - 1];
+        return onbegin();
       };
       res_parser.onHeadersComplete = function(info) {
         _this.response = parse_headers(info);
@@ -270,7 +272,7 @@
               event = _ref2[_k];
               connection.removeAllListeners(event);
             }
-            ready();
+            onend();
             return connection.emit('data', buffer, packet);
           }
         });
@@ -281,7 +283,7 @@
             event = _ref2[_k];
             connection.removeAllListeners(event);
           }
-          return ready();
+          return onend();
         });
       };
     }

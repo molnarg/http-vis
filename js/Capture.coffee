@@ -72,14 +72,13 @@ class Stream
     @domain = undefined
 
     inprogress = undefined
-    parse_transaction = =>
+    add = =>
       @domain ?= inprogress.request.headers.host
       @transactions.push(inprogress)
       inprogress.id = @capture.transactions.push(inprogress) - 1
-      inprogress = new Transaction(@, ab, ba, connection, parse_transaction)
-
-    inprogress = new Transaction(@, ab, ba, connection, parse_transaction)
-
+    startnew = =>
+      inprogress = new Transaction(@, ab, ba, connection, add, startnew)
+    startnew()
 
 class Transaction
   parse_headers = (info) ->
@@ -103,7 +102,7 @@ class Transaction
         @response_first ?= packet
         @response_last = packet
 
-  constructor: (@stream, ab, ba, connection, ready) ->
+  constructor: (@stream, ab, ba, connection, onbegin, onend) ->
     @capture = @stream.capture
 
     req_parser = new HTTPParser(HTTPParser.REQUEST)
@@ -112,7 +111,7 @@ class Transaction
     req_parser.onHeadersComplete = (info) =>
       return if @request?
       @request = parse_headers(info)
-      @request_ack = @packets_in[@packets_in.length - 1]
+      onbegin()
     res_parser.onHeadersComplete = (info) =>
       @response = parse_headers(info)
       res_parser.onMessageComplete() if 'transfer-encoding' not of @response.headers and 'content-length' not of @response.headers
@@ -135,11 +134,11 @@ class Transaction
           @register_packet connection, buffer, packet
         else
           connection.removeAllListeners(event) for event in ['data', 'end'] # don't listen anymore
-          ready() # give the stream to the new owner
+          onend() # give the stream to the new owner
           connection.emit 'data', buffer, packet # re-emit event for the new owner
       connection.on 'end', ->
         connection.removeAllListeners(event) for event in ['data', 'end'] # don't listen anymore
-        ready() # report that we are ready
+        onend() # report that we are ready
 
   begin: (bandwidth) -> packet_begin(@packets[0], bandwidth)
   end: -> packets[packets.length - 1].timestamp
