@@ -55,7 +55,7 @@ window.Stripes = class Stripes
     as = bars.enter().append('a')
       .attr('class', 'transaction')
       .attr('transaction-id', (t) -> t.id)
-      .attr('xlink:href', (t, id) -> t.request.url)
+      .attr('xlink:href', (t) -> t.request.url)
     as.append('title').text (t) ->
       "TCP##{t.stream.id} (#{t.stream.domain})\n" +
       "HTTP##{t.id} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
@@ -73,19 +73,19 @@ window.Stripes = class Stripes
     #  .attr('class', 'response')
     #  .attr('height', '1em')
 
-    bars.each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
+    bars.each((t) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
     bars.select('rect.transaction-bar')
-      .attr('x',     (t, id) -> scale(t.begin(bandwidth) - capture_begin))
-      .attr('y',     (t, id) -> transaction_y(t) + 'em')
-      .attr('width', (t, id) -> scale(t.response_end() - t.begin(bandwidth)))
+      .attr('x',     (t) -> scale(t.begin(bandwidth) - capture_begin))
+      .attr('y',     (t) -> transaction_y(t) + 'em')
+      .attr('width', (t) -> scale(t.response_end() - t.begin(bandwidth)))
     bars.select('rect.request')
-      .attr('x',     (t, id) -> scale(t.request_begin(bandwidth) - capture_begin))
-      .attr('y',     (t, id) -> transaction_y(t) + 'em')
-      .attr('width', (t, id) -> scale(t.response_begin(bandwidth) - t.request_begin(bandwidth)))
+      .attr('x',     (t) -> scale(t.request_begin(bandwidth) - capture_begin))
+      .attr('y',     (t) -> transaction_y(t) + 'em')
+      .attr('width', (t) -> scale(t.response_begin(bandwidth) - t.request_begin(bandwidth)))
     #bars.select('rect.response')
-    #  .attr('x',     (t, id) -> scale(t.response_begin(bandwidth) - capture_begin))
-    #  .attr('y',     (t, id) -> transaction_y(t) + 'em')
-    #  .attr('width', (t, id) -> scale(t.response_duration(bandwidth)))
+    #  .attr('x',     (t) -> scale(t.response_begin(bandwidth) - capture_begin))
+    #  .attr('y',     (t) -> transaction_y(t) + 'em')
+    #  .attr('width', (t) -> scale(t.response_duration(bandwidth)))
 
     bars.exit().remove()
 
