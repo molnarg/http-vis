@@ -28,16 +28,24 @@
         stream = new Stream(_this, ab, ba, connection);
         return stream.id = _this.streams.push(stream) - 1;
       });
-      this.pcap.packets.forEach(function(packet) {
-        packet.id = _this.packets.push(packet) - 1;
-        packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000;
-        if (begin == null) {
-          begin = packet.timestamp;
+      try {
+        this.pcap.packets.forEach(function(packet) {
+          packet.id = _this.packets.push(packet) - 1;
+          packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000;
+          if (begin == null) {
+            begin = packet.timestamp;
+          }
+          packet.relative_timestamp = packet.timestamp - begin;
+          return tcp_tracker.write(packet);
+        });
+        tcp_tracker.end();
+        if (this.pcap.packets.length === 0) {
+          throw 'No packets in file';
         }
-        packet.relative_timestamp = packet.timestamp - begin;
-        return tcp_tracker.write(packet);
-      });
-      tcp_tracker.end();
+      } catch (e) {
+        alert('File parsing error. Make sure the file is in libpcap (and not pcapng) format.');
+        throw e;
+      }
     }
 
     Capture.prototype.filter = function(client, server) {

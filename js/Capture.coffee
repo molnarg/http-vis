@@ -17,13 +17,18 @@ window.Capture = class Capture
       stream = new Stream(@, ab, ba, connection)
       stream.id = @streams.push(stream) - 1
 
-    @pcap.packets.forEach (packet) =>
-      packet.id = @packets.push(packet) - 1
-      packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
-      begin ?= packet.timestamp
-      packet.relative_timestamp = packet.timestamp - begin
-      tcp_tracker.write packet
-    tcp_tracker.end()
+    try
+      @pcap.packets.forEach (packet) =>
+        packet.id = @packets.push(packet) - 1
+        packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
+        begin ?= packet.timestamp
+        packet.relative_timestamp = packet.timestamp - begin
+        tcp_tracker.write packet
+      tcp_tracker.end()
+      throw 'No packets in file' if @pcap.packets.length is 0
+    catch e
+      alert 'File parsing error. Make sure the file is in libpcap (and not pcapng) format.'
+      throw e
 
   filter: (client, server) ->
     filtered = Object.create Capture.prototype
