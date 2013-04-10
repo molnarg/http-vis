@@ -1,3 +1,9 @@
+truncate = (maxlength, str) ->
+  if str.length <= maxlength
+    str
+  else
+    str.substr(0, maxlength - 1) + '...'
+
 window.Stripes = class Stripes
   margin = 0.1
 
@@ -48,6 +54,13 @@ window.Stripes = class Stripes
       .attr('class', 'transaction')
       .attr('id', (t, id) -> 'transaction-' + id)
       .attr('xlink:href', (t, id) -> t.request.url)
+    as.append('title').text (t,i) ->
+      "TCP##{streams.indexOf(t.stream)} (#{t.stream.domain})\n" +
+      "HTTP##{i} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
+      "begin: #{(t.request_begin(bandwidth) - capture_begin).toFixed(2)}s\n" +
+      "sending: #{Math.round t.request_duration(bandwidth) * 1000}ms\n" +
+      "waiting: #{Math.round (t.response_begin(bandwidth) - t.request_end()) * 1000}ms\n" +
+      "receiving: #{Math.round t.response_duration(bandwidth) * 1000}ms"
     as.append('rect')
       .attr('class', 'stream')
       .attr('height', '1em')
