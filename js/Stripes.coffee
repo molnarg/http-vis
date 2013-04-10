@@ -12,7 +12,8 @@ window.Stripes = class Stripes
 
   download: ->
     xml = @svg.node().parentNode.innerHTML.replace(/^\s*<!--\s*([\s\S]*)-->\s*<svg/, '$1\n<svg')
-    document.location.href = 'data:application/octet-stream;base64,' + btoa(xml)
+    blob = new Blob([xml], type: "image/svg+xml")
+    saveAs(blob, "http-vis.svg")
     return false
 
   draw: (capture, palette, bandwidth) ->
