@@ -59,19 +59,19 @@
       wireshark_begin = capture.packets[0].timestamp;
       scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
       draw_packets = function(stripes, y, height) {
-        stripes.enter().append('rect').attr('class', 'packet').attr('y', y).attr('height', height).attr('packet-id', function(packet) {
+        stripes.enter().append('rect').attr('class', 'packet').attr('height', height);
+        stripes.attr('packet-id', function(packet) {
           return packet.id;
-        });
-        stripes.attr('x', function(packet) {
+        }).attr('x', function(packet) {
           return scale(packet.timestamp - duration(packet) - capture_begin);
-        }).attr('width', function(packet) {
+        }).attr('y', y).attr('width', function(packet) {
           return scale(duration(packet));
         }).attr('fill', function(packet) {
           return palette.color(packet.transaction);
         });
         return stripes.exit().remove();
       };
-      draw_packets(this.svg.selectAll('rect.packet').data(packets), 0, '100%');
+      draw_packets(this.svg.select('#packets').selectAll('rect.packet').data(packets), 0, '100%');
       transactions = capture.transactions.filter(function(t) {
         return (t.request && t.response) || console.error('incomplete transaction:', t);
       });
@@ -82,18 +82,20 @@
         return 2 * margin + (1 + 2 * margin) * (streams.indexOf(transaction.stream));
       };
       bars = this.svg.selectAll('a.transaction').data(transactions);
-      as = bars.enter().append('a').attr('class', 'transaction').attr('transaction-id', function(t) {
+      as = bars.enter().append('a').attr('class', 'transaction');
+      as.append('title');
+      as.append('rect').attr('class', 'transaction-bar').attr('height', '1em');
+      as.append('rect').attr('class', 'request').attr('height', '1em');
+      bars.attr('transaction-id', function(t) {
         return t.id;
       }).attr('xlink:href', function(t) {
         return t.request.url;
       });
-      as.append('title').text(function(t) {
-        return ("TCP#" + t.stream.id + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
-      });
-      as.append('rect').attr('class', 'transaction-bar').attr('height', '1em');
-      as.append('rect').attr('class', 'request').attr('height', '1em');
       bars.each(function(t) {
         return draw_packets(d3.select(this).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em');
+      });
+      bars.select('title').text(function(t) {
+        return ("TCP#" + t.stream.id + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
       });
       bars.select('rect.transaction-bar').attr('x', function(t) {
         return scale(t.begin(bandwidth) - capture_begin);
@@ -113,13 +115,15 @@
       em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
       this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 'px');
       svg_dom = this.svg[0][0];
-      svg_dom.onmousemove = function(event) {
-        var time;
+      this.svg.on('mousemove', function() {
+        var event, time;
+        event = d3.event;
         time = capture_begin + capture_duration * (event.clientX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin;
         return _this.onmousemove(time);
-      };
-      return svg_dom.onmouseover = function(event) {
-        var packet, stream, transaction;
+      });
+      return this.svg.on('mouseover', function() {
+        var event, packet, stream, transaction;
+        event = d3.event;
         if (event.target.classList.toString() === 'packet') {
           packet = capture.capture.packets[event.target.getAttribute('packet-id')];
           transaction = packet.transaction;
@@ -132,7 +136,7 @@
         } else {
           return _this.onmouseover();
         }
-      };
+      });
     };
 
     Stripes.prototype.onmousemove = function(time) {};
