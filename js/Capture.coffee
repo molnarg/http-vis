@@ -7,60 +7,40 @@ window.Capture = class Capture
   constructor: (pcap) ->
     @pcap = new Packet.views.PcapFile(pcap)
     @streams = []
-    @all_packets = []
+    @transactions = []
+    @packets = []
 
     begin = undefined
     tcp_tracker = Packet.stream.tcp()
-    tcp_tracker.on 'connection', (ab, ba, connection) => @streams.push new Stream(@, ab, ba, connection)
-    @pcap.packets.forEach (packet, id) =>
-      @all_packets.push(packet)
-      packet.id = id
+    tcp_tracker.on 'connection', (ab, ba, connection) =>
+      stream = new Stream(@, ab, ba, connection)
+      stream.id = @streams.push(stream) - 1
+
+    @pcap.packets.forEach (packet) =>
+      packet.id = @packets.push(packet) - 1
       packet.timestamp = packet.ts_sec + packet.ts_usec / 1000000
       begin ?= packet.timestamp
       packet.relative_timestamp = packet.timestamp - begin
       tcp_tracker.write packet
     tcp_tracker.end()
 
-  clients: ->
-    _.uniq (stream.src.ip for stream in @streams when stream.transactions.length isnt 0)
-
-  servers: ->
-    _.uniq (stream.dst.address for stream in @streams when stream.transactions.length isnt 0)
-
-  transactions: ->
-    _.flatten (stream.transactions for stream in @streams)
-
   filter: (client, server) ->
     filtered = Object.create Capture.prototype
     filtered.pcap = @pcap
-    filtered.all_packets = @all_packets
-    filtered.streams = []
-    for stream in @streams
-      if (not client or stream.src.ip is client) and (not server or stream.dst.address is server)
-        filtered.streams.push(stream)
+    filtered.streams = @streams.filter (stream) -> (not client or stream.src.ip is client) and (not server or stream.dst.address is server)
+    filtered.transactions = @transactions.filter (transaction) -> transaction.stream in filtered.streams
+    filtered.packets = @packets.filter (packet) -> packet.transaction in filtered.transactions
+
     return filtered
 
-  packets: ->
-    packets = _.flatten(transaction.packets for transaction in stream.transactions for stream in @streams)
-    return _.sortBy packets, (packet) -> packet.timestamp
+  clients: -> _.uniq (stream.src.ip for stream in @streams when stream.transactions.length isnt 0)
+  servers: -> _.uniq (stream.dst.address for stream in @streams when stream.transactions.length isnt 0)
 
-  packets_in: ->
-    packets = _.flatten(transaction.packets_in for transaction in stream.transactions for stream in @streams)
-    return _.sortBy packets, (packet) -> packet.timestamp
+  packets_in: -> @packets.filter (packet) -> packet in packet.transaction.packets_in
+  packets_out: -> @packets.filter (packet) -> packet in packet.transaction.packets_out
 
-  packets_out: ->
-    packets = _.flatten(transaction.packets_out for transaction in stream.transactions for stream in @streams)
-    return _.sortBy packets, (packet) -> packet.timestamp
-
-  first_packet: ->
-    @packets()[0]
-
-  last_packet: ->
-    packets = @packets()
-    return packets[packets.length - 1]
-
-  begin: (bandwidth) -> packet_begin @first_packet(), bandwidth
-  end: -> @last_packet().timestamp
+  begin: (bandwidth) -> packet_begin @packets[0], bandwidth
+  end: -> @packets[@packets.length - 1].timestamp
   duration: (bandwidth) -> @end() - @begin(bandwidth)
 
   bandwidth: ->
@@ -95,14 +75,13 @@ class Stream
     parse_transaction = =>
       @domain ?= inprogress.request.headers.host
       @transactions.push(inprogress)
+      inprogress.id = @capture.transactions.push(inprogress) - 1
       inprogress = new Transaction(@, ab, ba, connection, parse_transaction)
 
     inprogress = new Transaction(@, ab, ba, connection, parse_transaction)
 
 
 class Transaction
-  next_id = 0
-
   parse_headers = (info) ->
     headers = info.headers
     info.headers = {}
@@ -125,8 +104,7 @@ class Transaction
         @response_last = packet
 
   constructor: (@stream, ab, ba, connection, ready) ->
-    @id = next_id
-    next_id += 1
+    @capture = @stream.capture
 
     req_parser = new HTTPParser(HTTPParser.REQUEST)
     res_parser = new HTTPParser(HTTPParser.RESPONSE)

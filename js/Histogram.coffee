@@ -8,7 +8,7 @@ window.Histogram = class Histogram
     duration = end - begin
     interval = duration / intervals
 
-    transactions = _.sortBy capture.transactions(), (transaction) -> palette.color(transaction).toString()
+    transactions = _.sortBy capture.transactions, (transaction) -> palette.color(transaction).toString()
 
     data = d3.layout.stack() transactions.map (transaction) ->
       for i in [0..intervals]

@@ -14,7 +14,7 @@
       end = capture.end();
       duration = end - begin;
       interval = duration / intervals;
-      transactions = _.sortBy(capture.transactions(), function(transaction) {
+      transactions = _.sortBy(capture.transactions, function(transaction) {
         return palette.color(transaction).toString();
       });
       data = d3.layout.stack()(transactions.map(function(transaction) {
