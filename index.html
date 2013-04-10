@@ -73,10 +73,14 @@
             font-family: "Courier New";
         }
 
-        #time-info {
+        #navbar-info>* {
             display: inline-block;
-            width: 4em;
         }
+
+        #time-info   { width: 4em; }
+        #tcp-info    { width: 6em; }
+        #http-info   { width: 6em; }
+        #packet-info { width: 9em; }
     </style>
 </head>
 
@@ -137,6 +141,8 @@
                 <p id="navbar-info" class="navbar-text">
                     <span id="loading">loading...</span>
                     <span id="time-info"></span>
+                    <span id="tcp-info"></span>
+                    <span id="http-info"></span>
                     <span id="packet-info"></span>
                 </p>
             </div>
@@ -301,24 +307,25 @@
         }
 
         var time_info = $('#time-info')
-        stripes_svg.mousemove(function(event) {
-            if (!capture) return
-            var begin = capture.first_packet().relative_timestamp
-            var duration = capture.last_packet().timestamp - capture.first_packet().timestamp
-            var timestamp = begin + (event.clientX - stripes_svg.offset().left) * duration / stripes_svg.width()
-            time_info.text(timestamp.toFixed(2) + 's')
-        })
+        stripes.onmousemove = function(time) {
+            time_info.text(time.toFixed(2) + 's')
+        }
 
-        var hide_timeout, packet_info = $('#packet-info')
-        stripes_svg.mouseover(function(event) {
-            if (event.target.classList == 'packet') {
-                var id = Number(event.target.getAttribute('packet-id'))
-                packet_info.text('packet #' + id)
+        var hide_timeout, packet_info = $('#packet-info'), tcp_info = $('#tcp-info'), http_info = $('#http-info')
+        stripes.onmouseover = function(stream, transaction, packet) {
+            if (packet) {
+                packet_info.text('packet #' + packet.id)
+                //tcp_info.text('TCP #' + stream.id)
+                http_info.text('HTTP #' + transaction.id)
                 clearTimeout(hide_timeout)
             } else {
-                hide_timeout = setTimeout(packet_info.text.bind(packet_info, ''), 200)
+                hide_timeout = setTimeout(function() {
+                    packet_info.text('')
+                    //tcp_info.text('')
+                    http_info.text('')
+                }, 200)
             }
-        })
+        }
     </script>
 
 </body>

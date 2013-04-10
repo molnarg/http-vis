@@ -27,12 +27,15 @@
     };
 
     Stripes.prototype.draw = function(capture, palette, bandwidth) {
-      var as, bars, capture_begin, draw_packets, duration, em, packets, scale, streams, transaction_y, transactions;
+      var as, bars, capture_begin, capture_duration, draw_packets, duration, em, packets, scale, streams, svg_dom, transaction_y, transactions, wireshark_begin,
+        _this = this;
       packets = capture.packets_in();
       duration = function(packet) {
         return packet.size / bandwidth;
       };
       capture_begin = capture.begin(bandwidth);
+      capture_duration = capture.duration(bandwidth);
+      wireshark_begin = capture.first_packet().timestamp;
       scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
       draw_packets = function(stripes, y, height) {
         stripes.enter().append('rect').attr('class', 'packet').attr('y', y).attr('height', height).attr('packet-id', function(packet) {
@@ -64,7 +67,7 @@
         return t.request.url;
       });
       as.append('title').text(function(t, i) {
-        return ("TCP#" + (streams.indexOf(t.stream)) + " (" + t.stream.domain + ")\n") + ("HTTP#" + i + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - capture_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
+        return ("TCP#" + (streams.indexOf(t.stream)) + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
       });
       as.append('rect').attr('class', 'stream').attr('height', '1em');
       as.append('rect').attr('class', 'request').attr('height', '1em');
@@ -87,8 +90,29 @@
       });
       bars.exit().remove();
       em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
-      return this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 'px');
+      this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 'px');
+      svg_dom = this.svg[0][0];
+      svg_dom.onmousemove = function(event) {
+        var time;
+        time = capture_begin + capture_duration * (event.clientX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin;
+        return _this.onmousemove(time);
+      };
+      return svg_dom.onmouseover = function(event) {
+        var packet, stream, transaction;
+        if (event.target.classList.toString() === 'packet') {
+          packet = capture.all_packets[event.target.getAttribute('packet-id')];
+          transaction = packet.transaction;
+          stream = transaction.stream;
+          return _this.onmouseover(stream, transaction, packet);
+        } else {
+          return _this.onmouseover();
+        }
+      };
     };
+
+    Stripes.prototype.onmousemove = function(time) {};
+
+    Stripes.prototype.onmouseover = function(stream, transaction, packet) {};
 
     return Stripes;
 

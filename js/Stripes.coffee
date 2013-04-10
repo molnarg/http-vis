@@ -21,6 +21,8 @@ window.Stripes = class Stripes
     # Placement
     duration = (packet) -> packet.size / bandwidth
     capture_begin = capture.begin(bandwidth)
+    capture_duration = capture.duration(bandwidth)
+    wireshark_begin = capture.first_packet().timestamp
 
     scale = d3.scale.linear()
       .domain([0, capture.end() - capture_begin])
@@ -56,8 +58,8 @@ window.Stripes = class Stripes
       .attr('xlink:href', (t, id) -> t.request.url)
     as.append('title').text (t,i) ->
       "TCP##{streams.indexOf(t.stream)} (#{t.stream.domain})\n" +
-      "HTTP##{i} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
-      "begin: #{(t.request_begin(bandwidth) - capture_begin).toFixed(2)}s\n" +
+      "HTTP##{t.id} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
+      "begin: #{(t.request_begin(bandwidth) - wireshark_begin).toFixed(2)}s\n" +
       "sending: #{Math.round t.request_duration(bandwidth) * 1000}ms\n" +
       "waiting: #{Math.round (t.response_begin(bandwidth) - t.request_end()) * 1000}ms\n" +
       "receiving: #{Math.round t.response_duration(bandwidth) * 1000}ms"
@@ -89,3 +91,20 @@ window.Stripes = class Stripes
 
     em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1])
     @svg.attr('height', (2*margin + streams.length * (1 + 2*margin)) * em + 'px')
+
+    svg_dom = @svg[0][0]
+    svg_dom.onmousemove = (event) =>
+      time = capture_begin + capture_duration * (event.clientX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin
+      @onmousemove time
+    svg_dom.onmouseover = (event) =>
+      if event.target.classList.toString() == 'packet'
+        packet = capture.all_packets[event.target.getAttribute('packet-id')]
+        transaction = packet.transaction
+        stream = transaction.stream
+        @onmouseover(stream, transaction, packet)
+
+      else
+        @onmouseover()
+
+  onmousemove: (time) ->
+  onmouseover: (stream, transaction, packet) ->
