@@ -22,7 +22,7 @@ window.Stripes = class Stripes
     duration = (packet) -> packet.size / bandwidth
     capture_begin = capture.begin(bandwidth)
     capture_duration = capture.duration(bandwidth)
-    wireshark_begin = capture.first_packet().timestamp
+    wireshark_begin = capture.packets[0].timestamp
 
     scale = d3.scale.linear()
       .domain([0, capture.end() - capture_begin])
@@ -46,7 +46,7 @@ window.Stripes = class Stripes
     draw_packets @svg.selectAll('rect.packet').data(packets), 0, '100%'
 
     # Drawing transactions
-    transactions = capture.transactions().filter (t) -> (t.request and t.response) or console.error('incomplete transaction:', t)
+    transactions = capture.transactions.filter (t) -> (t.request and t.response) or console.error('incomplete transaction:', t)
     streams = capture.streams.filter (stream) -> stream.transactions.length isnt 0
     transaction_y = (transaction) -> 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
 
@@ -54,17 +54,18 @@ window.Stripes = class Stripes
 
     as = bars.enter().append('a')
       .attr('class', 'transaction')
+      .attr('transaction-id', (t) -> t.id)
       .attr('id', (t, id) -> 'transaction-' + id)
       .attr('xlink:href', (t, id) -> t.request.url)
-    as.append('title').text (t,i) ->
-      "TCP##{streams.indexOf(t.stream)} (#{t.stream.domain})\n" +
+    as.append('title').text (t) ->
+      "TCP##{t.stream.id} (#{t.stream.domain})\n" +
       "HTTP##{t.id} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
       "begin: #{(t.request_begin(bandwidth) - wireshark_begin).toFixed(2)}s\n" +
       "sending: #{Math.round t.request_duration(bandwidth) * 1000}ms\n" +
       "waiting: #{Math.round (t.response_begin(bandwidth) - t.request_end()) * 1000}ms\n" +
       "receiving: #{Math.round t.response_duration(bandwidth) * 1000}ms"
     as.append('rect')
-      .attr('class', 'stream')
+      .attr('class', 'transaction-bar')
       .attr('height', '1em')
     as.append('rect')
       .attr('class', 'request')
@@ -74,7 +75,7 @@ window.Stripes = class Stripes
     #  .attr('height', '1em')
 
     bars.each((t, id) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
-    bars.select('rect.stream')
+    bars.select('rect.transaction-bar')
       .attr('x',     (t, id) -> scale(t.begin(bandwidth) - capture_begin))
       .attr('y',     (t, id) -> transaction_y(t) + 'em')
       .attr('width', (t, id) -> scale(t.response_end() - t.begin(bandwidth)))
@@ -98,10 +99,15 @@ window.Stripes = class Stripes
       @onmousemove time
     svg_dom.onmouseover = (event) =>
       if event.target.classList.toString() == 'packet'
-        packet = capture.all_packets[event.target.getAttribute('packet-id')]
+        packet = capture.packets[event.target.getAttribute('packet-id')]
         transaction = packet.transaction
         stream = transaction.stream
         @onmouseover(stream, transaction, packet)
+
+      else if event.target.parentNode.classList.toString() == 'transaction'
+        transaction = capture.transactions[event.target.parentNode.getAttribute('transaction-id')]
+        stream = transaction.stream
+        @onmouseover(stream, transaction)
 
       else
         @onmouseover()

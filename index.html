@@ -168,7 +168,7 @@
                     font-size: 24px;
                 }
 
-                rect.stream {
+                rect.transaction-bar {
                     fill: #FFF;
                     fill-opacity: 0.7;
                     /*
@@ -314,14 +314,23 @@
         var hide_timeout, packet_info = $('#packet-info'), tcp_info = $('#tcp-info'), http_info = $('#http-info')
         stripes.onmouseover = function(stream, transaction, packet) {
             if (packet) {
-                packet_info.text('packet #' + packet.id)
-                //tcp_info.text('TCP #' + stream.id)
-                http_info.text('HTTP #' + transaction.id)
                 clearTimeout(hide_timeout)
+                packet_info.text('packet #' + packet.id)
+                tcp_info.text('TCP #' + stream.id)
+                http_info.text('HTTP #' + transaction.id)
+
+            } else if (stream) {
+                clearTimeout(hide_timeout)
+                tcp_info.text('TCP #' + stream.id)
+                http_info.text('HTTP #' + transaction.id)
+                hide_timeout = setTimeout(function() {
+                    packet_info.text('')
+                }, 200)
+
             } else {
                 hide_timeout = setTimeout(function() {
                     packet_info.text('')
-                    //tcp_info.text('')
+                    tcp_info.text('')
                     http_info.text('')
                 }, 200)
             }

@@ -35,7 +35,7 @@
       };
       capture_begin = capture.begin(bandwidth);
       capture_duration = capture.duration(bandwidth);
-      wireshark_begin = capture.first_packet().timestamp;
+      wireshark_begin = capture.packets[0].timestamp;
       scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
       draw_packets = function(stripes, y, height) {
         stripes.enter().append('rect').attr('class', 'packet').attr('y', y).attr('height', height).attr('packet-id', function(packet) {
@@ -51,7 +51,7 @@
         return stripes.exit().remove();
       };
       draw_packets(this.svg.selectAll('rect.packet').data(packets), 0, '100%');
-      transactions = capture.transactions().filter(function(t) {
+      transactions = capture.transactions.filter(function(t) {
         return (t.request && t.response) || console.error('incomplete transaction:', t);
       });
       streams = capture.streams.filter(function(stream) {
@@ -61,20 +61,22 @@
         return 2 * margin + (1 + 2 * margin) * (streams.indexOf(transaction.stream));
       };
       bars = this.svg.selectAll('a.transaction').data(transactions);
-      as = bars.enter().append('a').attr('class', 'transaction').attr('id', function(t, id) {
+      as = bars.enter().append('a').attr('class', 'transaction').attr('transaction-id', function(t) {
+        return t.id;
+      }).attr('id', function(t, id) {
         return 'transaction-' + id;
       }).attr('xlink:href', function(t, id) {
         return t.request.url;
       });
-      as.append('title').text(function(t, i) {
-        return ("TCP#" + (streams.indexOf(t.stream)) + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
+      as.append('title').text(function(t) {
+        return ("TCP#" + t.stream.id + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
       });
-      as.append('rect').attr('class', 'stream').attr('height', '1em');
+      as.append('rect').attr('class', 'transaction-bar').attr('height', '1em');
       as.append('rect').attr('class', 'request').attr('height', '1em');
       bars.each(function(t, id) {
         return draw_packets(d3.select(this).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em');
       });
-      bars.select('rect.stream').attr('x', function(t, id) {
+      bars.select('rect.transaction-bar').attr('x', function(t, id) {
         return scale(t.begin(bandwidth) - capture_begin);
       }).attr('y', function(t, id) {
         return transaction_y(t) + 'em';
@@ -100,10 +102,14 @@
       return svg_dom.onmouseover = function(event) {
         var packet, stream, transaction;
         if (event.target.classList.toString() === 'packet') {
-          packet = capture.all_packets[event.target.getAttribute('packet-id')];
+          packet = capture.packets[event.target.getAttribute('packet-id')];
           transaction = packet.transaction;
           stream = transaction.stream;
           return _this.onmouseover(stream, transaction, packet);
+        } else if (event.target.parentNode.classList.toString() === 'transaction') {
+          transaction = capture.transactions[event.target.parentNode.getAttribute('transaction-id')];
+          stream = transaction.stream;
+          return _this.onmouseover(stream, transaction);
         } else {
           return _this.onmouseover();
         }
