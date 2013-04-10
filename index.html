@@ -133,8 +133,11 @@
                         </div>
                     </div>
                 </form>
-                <form class="navbar-form pull-right">
+                <form class="navbar-form pull-right" style="margin-left: 4px;">
                     <input id="file-chooser" type="file">
+                </form>
+                <form class="navbar-form pull-right">
+                    <button id="load-example" class="btn"><i class="icon-wrench"></i> Load example</button>
                 </form>
                 <p id="navbar-info" class="navbar-text">
                     <span id="loading">loading...</span>
@@ -237,6 +240,33 @@
             dropdown.html(options.map(function(text) { return '<option>' + text + '</option>'}).join(''))
         }
 
+        function load(pcap) {
+            capture = new Capture(pcap)
+            filter(undefined, undefined)
+            draw()
+
+            options($('#client-dropdown'), ['any client'].concat(capture.clients()))
+            options($('#server-dropdown'), ['any server'].concat(capture.servers()))
+            $('#time-input').val(Math.round(duration*10)/10)
+            $('#width-input').val(Math.round(width))
+            $('#width-s-input').val(Math.round(width / duration))
+            $('#options-toggle').prop('disabled', false)
+            $('#download-button').prop('disabled', false)
+            $('#loading').hide()
+        }
+
+        $('#load-example').click(function() {
+            $('#loading').show()
+            setTimeout(function() {
+                var xhr = new XMLHttpRequest()
+                xhr.open('GET', '/example/example.pcap', true)
+                xhr.responseType = 'arraybuffer'
+                xhr.onload = function() { load(this.response) }
+                xhr.send()
+            }, 0)
+            return false
+        })
+
         $("#file-chooser").filestyle({
             buttonText: 'Choose PCAP file',
             icon: true,
@@ -246,24 +276,8 @@
             $('#loading').show()
             var file = this.files[0]
             var reader = new FileReader()
-
             reader.readAsArrayBuffer(file)
-            reader.onload = function() {
-                var pcap = new DataView(reader.result)
-
-                capture = new Capture(pcap)
-                filter(undefined, undefined)
-                draw()
-
-                options($('#client-dropdown'), ['any client'].concat(capture.clients()))
-                options($('#server-dropdown'), ['any server'].concat(capture.servers()))
-                $('#time-input').val(Math.round(duration*10)/10)
-                $('#width-input').val(Math.round(width))
-                $('#width-s-input').val(Math.round(width / duration))
-                $('#options-toggle').prop('disabled', false)
-                $('#download-button').prop('disabled', false)
-                $('#loading').hide()
-            }
+            reader.onload = function() { load(new DataView(reader.result)) }
         })
 
         var options_panel = $('#options'), options_toggle = $('#options-toggle')
