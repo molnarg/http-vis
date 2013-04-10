@@ -195,6 +195,15 @@
     </div>
 
     <script>
+        function notsupported() {
+            alert('Sorry, this browser is not yet supported. Please come back with Chrome or Chromium.')
+        }
+        try {
+            if (typeof Packet.views.PcapFile !== 'function') notsupported()
+        } catch(e) {
+            notsupported()
+        }
+
         var stripes_svg = $('#stripes-container>svg')
           , histogram_svg = $('#histogram-container>svg')
 
