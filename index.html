@@ -137,7 +137,7 @@
                     <input id="file-chooser" type="file">
                 </form>
                 <form class="navbar-form pull-right">
-                    <button id="load-example" class="btn"><i class="icon-wrench"></i> Load example</button>
+                    <button id="load-example" class="btn"><i class="icon-folder-open"></i> Load example</button>
                 </form>
                 <p id="navbar-info" class="navbar-text">
                     <span id="loading">loading...</span>
@@ -259,7 +259,7 @@
             $('#loading').show()
             setTimeout(function() {
                 var xhr = new XMLHttpRequest()
-                xhr.open('GET', '/example/example.pcap', true)
+                xhr.open('GET', 'example/example.pcap', true)
                 xhr.responseType = 'arraybuffer'
                 xhr.onload = function() { load(this.response) }
                 xhr.send()
