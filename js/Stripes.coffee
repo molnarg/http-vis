@@ -55,7 +55,6 @@ window.Stripes = class Stripes
     as = bars.enter().append('a')
       .attr('class', 'transaction')
       .attr('transaction-id', (t) -> t.id)
-      .attr('id', (t, id) -> 'transaction-' + id)
       .attr('xlink:href', (t, id) -> t.request.url)
     as.append('title').text (t) ->
       "TCP##{t.stream.id} (#{t.stream.domain})\n" +
@@ -99,13 +98,13 @@ window.Stripes = class Stripes
       @onmousemove time
     svg_dom.onmouseover = (event) =>
       if event.target.classList.toString() == 'packet'
-        packet = capture.packets[event.target.getAttribute('packet-id')]
+        packet = capture.capture.packets[event.target.getAttribute('packet-id')]
         transaction = packet.transaction
         stream = transaction.stream
         @onmouseover(stream, transaction, packet)
 
       else if event.target.parentNode.classList.toString() == 'transaction'
-        transaction = capture.transactions[event.target.parentNode.getAttribute('transaction-id')]
+        transaction = capture.capture.transactions[event.target.parentNode.getAttribute('transaction-id')]
         stream = transaction.stream
         @onmouseover(stream, transaction)
 

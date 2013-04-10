@@ -5,6 +5,7 @@ packet_begin = (packet, bandwidth) -> packet.timestamp - packet.size / bandwidth
 
 window.Capture = class Capture
   constructor: (pcap) ->
+    @capture = @
     @pcap = new Packet.views.PcapFile(pcap)
     @streams = []
     @transactions = []
@@ -26,6 +27,7 @@ window.Capture = class Capture
 
   filter: (client, server) ->
     filtered = Object.create Capture.prototype
+    filtered.capture = @capture
     filtered.pcap = @pcap
     filtered.streams = @streams.filter (stream) -> (not client or stream.src.ip is client) and (not server or stream.dst.address is server)
     filtered.transactions = @transactions.filter (transaction) -> transaction.stream in filtered.streams

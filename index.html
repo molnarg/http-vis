@@ -315,7 +315,7 @@
         stripes.onmouseover = function(stream, transaction, packet) {
             if (packet) {
                 clearTimeout(hide_timeout)
-                packet_info.text('packet #' + packet.id)
+                packet_info.text('packet #' + (packet.id + 1))
                 tcp_info.text('TCP #' + stream.id)
                 http_info.text('HTTP #' + transaction.id)
 

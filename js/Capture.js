@@ -16,6 +16,7 @@
     function Capture(pcap) {
       var begin, tcp_tracker,
         _this = this;
+      this.capture = this;
       this.pcap = new Packet.views.PcapFile(pcap);
       this.streams = [];
       this.transactions = [];
@@ -42,6 +43,7 @@
     Capture.prototype.filter = function(client, server) {
       var filtered;
       filtered = Object.create(Capture.prototype);
+      filtered.capture = this.capture;
       filtered.pcap = this.pcap;
       filtered.streams = this.streams.filter(function(stream) {
         return (!client || stream.src.ip === client) && (!server || stream.dst.address === server);

@@ -63,8 +63,6 @@
       bars = this.svg.selectAll('a.transaction').data(transactions);
       as = bars.enter().append('a').attr('class', 'transaction').attr('transaction-id', function(t) {
         return t.id;
-      }).attr('id', function(t, id) {
-        return 'transaction-' + id;
       }).attr('xlink:href', function(t, id) {
         return t.request.url;
       });
@@ -102,12 +100,12 @@
       return svg_dom.onmouseover = function(event) {
         var packet, stream, transaction;
         if (event.target.classList.toString() === 'packet') {
-          packet = capture.packets[event.target.getAttribute('packet-id')];
+          packet = capture.capture.packets[event.target.getAttribute('packet-id')];
           transaction = packet.transaction;
           stream = transaction.stream;
           return _this.onmouseover(stream, transaction, packet);
         } else if (event.target.parentNode.classList.toString() === 'transaction') {
-          transaction = capture.transactions[event.target.parentNode.getAttribute('transaction-id')];
+          transaction = capture.capture.transactions[event.target.parentNode.getAttribute('transaction-id')];
           stream = transaction.stream;
           return _this.onmouseover(stream, transaction);
         } else {
