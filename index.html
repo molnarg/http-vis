@@ -309,13 +309,14 @@
             time_info.text(timestamp.toFixed(2) + 's')
         })
 
+        var hide_timeout, packet_info = $('#packet-info')
         stripes_svg.mouseover(function(event) {
-            var target = $(event.target)
-            if (target.attr('class') == 'packet') {
-                var id = Number(target.attr('packet-id'))
-                $('#packet-info').text('packet #' + id)
+            if (event.target.classList == 'packet') {
+                var id = Number(event.target.getAttribute('packet-id'))
+                packet_info.text('packet #' + id)
+                clearTimeout(hide_timeout)
             } else {
-                $('#packet-info').text('')
+                hide_timeout = setTimeout(packet_info.text.bind(packet_info, ''), 200)
             }
         })
     </script>
