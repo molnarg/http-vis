@@ -10,10 +10,28 @@ window.Stripes = class Stripes
   constructor: (svg) ->
     @svg = d3.select(svg)
 
-  download: ->
+  download: (format) ->
     xml = @svg.node().parentNode.innerHTML.replace(/^\s*<!--\s*([\s\S]*)-->\s*<svg/, '$1\n<svg')
     blob = new Blob([xml], type: "image/svg+xml")
-    saveAs(blob, "http-vis.svg")
+
+    if format is 'svg'
+      saveAs(blob, "http-vis.svg")
+
+    else if format is 'png'
+      # There's bug holding it up in webkit:
+      # https://bugs.webkit.org/show_bug.cgi?id=17352
+      # http://code.google.com/p/chromium/issues/detail?id=58999
+      img = new Image()
+      img.onload = =>
+        window.URL.revokeObjectURL(img.src)
+        canvas = document.getElementById("canvas")
+        canvas.width = @svg[0][0].clientWidth
+        canvas.height = @svg[0][0].clientHeight
+        ctx = canvas.getContext("2d")
+        ctx.drawImage(img, 0, 0) # native -> security exception
+        canvas.toBlob (blob) -> saveAs(blob, "http-vis") # canvas-toBlob
+      img.src = window.URL.createObjectURL(blob)
+      
     return false
 
   draw: (capture, palette, bandwidth) ->

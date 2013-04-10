@@ -19,13 +19,31 @@
       this.svg = d3.select(svg);
     }
 
-    Stripes.prototype.download = function() {
-      var blob, xml;
+    Stripes.prototype.download = function(format) {
+      var blob, img, xml,
+        _this = this;
       xml = this.svg.node().parentNode.innerHTML.replace(/^\s*<!--\s*([\s\S]*)-->\s*<svg/, '$1\n<svg');
       blob = new Blob([xml], {
         type: "image/svg+xml"
       });
-      saveAs(blob, "http-vis.svg");
+      if (format === 'svg') {
+        saveAs(blob, "http-vis.svg");
+      } else if (format === 'png') {
+        img = new Image();
+        img.onload = function() {
+          var canvas, ctx;
+          window.URL.revokeObjectURL(img.src);
+          canvas = document.getElementById("canvas");
+          canvas.width = _this.svg[0][0].clientWidth;
+          canvas.height = _this.svg[0][0].clientHeight;
+          ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0);
+          return canvas.toBlob(function(blob) {
+            return saveAs(blob, "http-vis");
+          });
+        };
+        img.src = window.URL.createObjectURL(blob);
+      }
       return false;
     };
 
