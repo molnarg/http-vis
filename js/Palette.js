@@ -27,7 +27,7 @@
     };
 
     function Palette(capture, method) {
-      var color, content_colors, content_type, domain_colors, stream, transaction, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+      var color, content_colors, content_type, domain_colors, stream, transaction, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
       this.method = method;
       this.transaction_colors = {};
       this.color_id = 0;
@@ -68,7 +68,7 @@
             _ref6 = stream.transactions;
             for (_n = 0, _len5 = _ref6.length; _n < _len5; _n++) {
               transaction = _ref6[_n];
-              content_type = transaction.response.headers['content-type'];
+              content_type = (_ref7 = transaction.response) != null ? _ref7.headers['content-type'] : void 0;
               if (content_type != null ? content_type.match(/javascript/) : void 0) {
                 content_type = 'javascript';
               }
@@ -78,7 +78,7 @@
               if (content_type != null ? content_type.match(/html/) : void 0) {
                 content_type = 'html';
               }
-              if ((_ref7 = content_colors[content_type]) == null) {
+              if ((_ref8 = content_colors[content_type]) == null) {
                 content_colors[content_type] = this.next_color();
               }
               color = content_colors[content_type];
