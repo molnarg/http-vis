@@ -49,7 +49,7 @@ window.Palette = class Palette
         content_colors = {}
         for stream in capture.streams
           for transaction in stream.transactions
-            content_type = transaction.response.headers['content-type']
+            content_type = transaction.response?.headers['content-type']
             content_type = 'javascript' if content_type?.match /javascript/
             content_type = 'image' if content_type?.match /image/
             content_type = 'html' if content_type?.match /html/
