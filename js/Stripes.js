@@ -114,7 +114,7 @@
       });
       bars.exit().remove();
       em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1]);
-      this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 'px');
+      this.svg.attr('height', (2 * margin + streams.length * (1 + 2 * margin)) * em + 105 + 'px');
       svg_dom = this.svg[0][0];
       this.svg.on('mousemove', function() {
         var event, time;

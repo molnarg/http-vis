@@ -49,7 +49,7 @@
           return d.y0 + d.y;
         })
       ]);
-      stream = this.svg.selectAll("g.stream").data(data);
+      stream = this.svg.select('#histogram').selectAll("g.stream").data(data);
       stream.enter().append("svg:g").attr("class", "stream");
       stream.style("fill", function(d, i) {
         return palette.color(transactions[i]);

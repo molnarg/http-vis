@@ -29,7 +29,7 @@ window.Histogram = class Histogram
     scale_x = d3.scale.linear().range([0, 100]).domain([0, intervals])
     scale_y = d3.scale.linear().range([0, 90]).domain([0, d3.max(data[data.length - 1], (d) -> d.y0 + d.y)])
 
-    stream = @svg.selectAll("g.stream").data(data)
+    stream = @svg.select('#histogram').selectAll("g.stream").data(data)
     stream.enter().append("svg:g")
       .attr("class", "stream")
     stream

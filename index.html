@@ -55,10 +55,6 @@
             font-weight: bold;
         }
 
-        #histogram-container svg {
-            height: 100px;
-        }
-
         .navbar-inner>.container {
             width: auto;
             padding: 0 20px;
@@ -150,11 +146,6 @@
         </div>
     </div>
 
-    <div id="histogram-container">
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
-        </svg>
-    </div>
-
     <div id="stripes-container">
         <!--
         <?xml version="1.0" encoding="UTF-8" ?>
@@ -196,10 +187,11 @@
                 }
             </style>
             <rect id="background" width="100%" height="100%"></rect>
-            <g id="chart">
+            <svg id="histogram" height="100"></svg>
+            <svg id="barcode" y="105">
                 <g id="packets" class="packets"></g>
                 <g id="transactions"></g>
-            </g>
+            </svg>
         </svg>
     </div>
 
@@ -214,14 +206,12 @@
         }
 
         var stripes_svg = $('#stripes-container>svg')
-          , histogram_svg = $('#histogram-container>svg')
 
         var width = $(document).width()
         stripes_svg.attr('width', width + 'px')
-        histogram_svg.attr('width', width + 'px')
 
         var stripes = new Stripes(stripes_svg[0])
-        var stacked = new Histogram(histogram_svg[0])
+        var stacked = new Histogram(stripes_svg[0])
 
         var capture, filtered_capture, palette, color_by = 'stream', bandwidth, duration
 
@@ -316,7 +306,6 @@
 
         $('#width-input').change(function() {
             stripes_svg.attr('width', this.value + 'px')
-            histogram_svg.attr('width', this.value + 'px')
             $('#width-s-input').val(Math.round(this.value / duration))
         })
 
