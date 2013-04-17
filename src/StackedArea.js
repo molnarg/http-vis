@@ -15,7 +15,7 @@
       duration = end - begin;
       interval = duration / intervals;
       transactions = _.sortBy(capture.transactions, function(transaction) {
-        return palette.color(transaction).toString();
+        return palette.color(transaction);
       });
       data = d3.layout.stack()(transactions.map(function(transaction) {
         var i, interval_begin, interval_data, interval_end, packet, packet_begin, packet_duration, packet_end, packet_interval_duration, _i, _j, _len, _ref, _results;
@@ -49,14 +49,14 @@
           return d.y0 + d.y;
         })
       ]);
-      stream = this.svg.select('#stackedarea').selectAll("g.stream").data(data);
-      stream.enter().append("svg:g").attr("class", "stream");
-      stream.style("fill", function(d, i) {
-        return palette.color(transactions[i]);
+      stream = this.svg.select('#stackedarea').selectAll("g").data(data);
+      stream.enter().append("svg:g");
+      stream.attr("class", function(d, i) {
+        return "color-" + palette.color(transactions[i]);
       });
       stream.exit().remove();
-      rect = stream.selectAll("rect.area").data(Object);
-      rect.enter().append("svg:rect").attr("class", "area").attr("x", function(d) {
+      rect = stream.selectAll("rect").data(Object);
+      rect.enter().append("svg:rect").attr("x", function(d) {
         return scale_x(d.x) + '%';
       }).attr("width", 100 / intervals + '%');
       return rect.attr("y", function(d) {

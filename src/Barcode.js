@@ -66,8 +66,8 @@
           return scale(packet.timestamp - duration(packet) - capture_begin);
         }).attr('y', y).attr('width', function(packet) {
           return scale(duration(packet));
-        }).attr('fill', function(packet) {
-          return palette.color(packet.transaction);
+        }).attr('class', function(packet) {
+          return 'color-' + palette.color(packet.transaction);
         });
         return stripes.exit().remove();
       };

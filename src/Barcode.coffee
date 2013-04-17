@@ -57,7 +57,7 @@ window.Barcode = class Barcode
         .attr('x', (packet) -> scale(packet.timestamp - duration(packet) - capture_begin))
         .attr('y', y)
         .attr('width', (packet) -> scale(duration(packet)))
-        .attr('fill', (packet) -> palette.color(packet.transaction))
+        .attr('class', (packet) -> 'color-' + palette.color(packet.transaction))
 
       stripes.exit().remove()
 

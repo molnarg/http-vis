@@ -8,7 +8,7 @@ window.StackedArea = class StackedArea
     duration = end - begin
     interval = duration / intervals
 
-    transactions = _.sortBy capture.transactions, (transaction) -> palette.color(transaction).toString()
+    transactions = _.sortBy capture.transactions, (transaction) -> palette.color(transaction)
 
     data = d3.layout.stack() transactions.map (transaction) ->
       for i in [0..intervals]
@@ -29,16 +29,14 @@ window.StackedArea = class StackedArea
     scale_x = d3.scale.linear().range([0, 100]).domain([0, intervals])
     scale_y = d3.scale.linear().range([0, 90]).domain([0, d3.max(data[data.length - 1], (d) -> d.y0 + d.y)])
 
-    stream = @svg.select('#stackedarea').selectAll("g.stream").data(data)
+    stream = @svg.select('#stackedarea').selectAll("g").data(data)
     stream.enter().append("svg:g")
-      .attr("class", "stream")
     stream
-      .style("fill", (d, i) -> palette.color(transactions[i]))
+      .attr("class", (d, i) -> "color-" + palette.color(transactions[i]))
     stream.exit().remove()
 
-    rect = stream.selectAll("rect.area").data(Object)
+    rect = stream.selectAll("rect").data(Object)
     rect.enter().append("svg:rect")
-      .attr("class", "area")
       .attr("x", (d) -> scale_x(d.x) + '%')
       .attr("width", 100 / intervals + '%')
     rect
