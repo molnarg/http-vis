@@ -119,13 +119,13 @@
       this.svg.on('mousemove', function() {
         var event, time;
         event = d3.event;
-        time = capture_begin + capture_duration * (event.clientX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin;
+        time = capture_begin + capture_duration * (event.clientX + window.scrollX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin;
         return _this.onmousemove(time);
       });
       return this.svg.on('mouseover', function() {
         var event, packet, stream, transaction;
         event = d3.event;
-        if (event.target.classList.toString() === 'packet') {
+        if (event.target.parentNode.classList.toString() === 'packets') {
           packet = capture.capture.packets[event.target.getAttribute('packet-id')];
           transaction = packet.transaction;
           stream = transaction.stream;
