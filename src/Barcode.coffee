@@ -4,7 +4,7 @@ truncate = (maxlength, str) ->
   else
     str.substr(0, maxlength - 1) + '...'
 
-window.Stripes = class Stripes
+window.Barcode = class Barcode
   margin = 0.1
 
   constructor: (svg) ->

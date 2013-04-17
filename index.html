@@ -15,8 +15,8 @@
     <script src="vendor/FileSaver.js"></script>
 
     <script src="src/Capture.js"></script>
-    <script src="src/Stripes.js"></script>
-    <script src="src/Histogram.js"></script>
+    <script src="src/Barcode.js"></script>
+    <script src="src/StackedArea.js"></script>
     <script src="src/Palette.js"></script>
 
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.css">
@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    <div id="stripes-container">
+    <div id="barcode-container">
         <!--
         <?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
@@ -187,7 +187,7 @@
                 }
             </style>
             <rect id="background" width="100%" height="100%"></rect>
-            <svg id="histogram" height="100"></svg>
+            <svg id="stackedarea" height="100"></svg>
             <svg id="barcode" y="105">
                 <g id="packets" class="packets"></g>
                 <g id="transactions"></g>
@@ -205,18 +205,18 @@
             notsupported()
         }
 
-        var stripes_svg = $('#stripes-container>svg')
+        var barcode_svg = $('#barcode-container>svg')
 
         var width = $(document).width()
-        stripes_svg.attr('width', width + 'px')
+        barcode_svg.attr('width', width + 'px')
 
-        var stripes = new Stripes(stripes_svg[0])
-        var stacked = new Histogram(stripes_svg[0])
+        var barcode = new Barcode(barcode_svg[0])
+        var stacked = new StackedArea(barcode_svg[0])
 
         var capture, filtered_capture, palette, color_by = 'stream', bandwidth, duration
 
         function draw() {
-            stripes.draw(filtered_capture, palette, bandwidth)
+            barcode.draw(filtered_capture, palette, bandwidth)
             stacked.draw(filtered_capture, palette, bandwidth, 125)
         }
 
@@ -289,7 +289,7 @@
         })
 
         $('#download-button').click(function() {
-            stripes.download('svg')
+            barcode.download('svg')
             return false
         })
 
@@ -305,7 +305,7 @@
         })
 
         $('#width-input').change(function() {
-            stripes_svg.attr('width', this.value + 'px')
+            barcode_svg.attr('width', this.value + 'px')
             $('#width-s-input').val(Math.round(this.value / duration))
         })
 
@@ -323,12 +323,12 @@
         }
 
         var time_info = $('#time-info')
-        stripes.onmousemove = function(time) {
+        barcode.onmousemove = function(time) {
             time_info.text(Math.max(0, time).toFixed(2) + 's')
         }
 
         var hide_timeout, packet_info = $('#packet-info'), tcp_info = $('#tcp-info'), http_info = $('#http-info')
-        stripes.onmouseover = function(stream, transaction, packet) {
+        barcode.onmouseover = function(stream, transaction, packet) {
             if (packet) {
                 clearTimeout(hide_timeout)
                 packet_info.text('packet #' + (packet.id + 1))
