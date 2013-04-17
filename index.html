@@ -159,7 +159,9 @@
         <!--
         <?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
-            <!ATTLIST rect packet-id CDATA #IMPLIED>
+            <!ATTLIST rect
+                packet-id CDATA #IMPLIED
+                transaction-id CDATA #IMPLIED>
         ]>
         -->
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
@@ -194,7 +196,10 @@
                 }
             </style>
             <rect id="background" width="100%" height="100%"></rect>
-            <g id="packets"></g>
+            <g id="chart">
+                <g id="packets" class="packets"></g>
+                <g id="transactions"></g>
+            </g>
         </svg>
     </div>
 

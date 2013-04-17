@@ -50,7 +50,6 @@ window.Stripes = class Stripes
     # Drawing packets
     draw_packets = (stripes, y, height) ->
       stripes.enter().append('rect')
-        .attr('class', 'packet')
         .attr('height', height)
 
       stripes
@@ -62,18 +61,17 @@ window.Stripes = class Stripes
 
       stripes.exit().remove()
 
-    draw_packets @svg.select('#packets').selectAll('rect.packet').data(packets), 0, '100%'
+    draw_packets @svg.select('#packets').selectAll('rect').data(packets), 0, '100%'
 
     # Drawing transactions
     transactions = capture.transactions.filter (t) -> (t.request and t.response) or console.error('incomplete transaction:', t)
     streams = capture.streams.filter (stream) -> stream.transactions.length isnt 0
     transaction_y = (transaction) -> 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
 
-    bars = @svg.selectAll('a.transaction').data(transactions)
+    bars = @svg.select('#transactions').selectAll('a').data(transactions)
 
     # Transactions enter
     as = bars.enter().append('a')
-      .attr('class', 'transaction')
     as.append('title')
     as.append('rect')
       .attr('class', 'transaction-bar')
@@ -81,12 +79,14 @@ window.Stripes = class Stripes
     as.append('rect')
       .attr('class', 'request')
       .attr('height', '1em')
+    as.append('g')
+      .attr('class', 'packets')
 
     # Transactions change
     bars
       .attr('transaction-id', (t) -> t.id)
       .attr('xlink:href', (t) -> t.request.url)
-    bars.each((t) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
+    bars.each((t) -> draw_packets d3.select(@).select('g.packets').selectAll('rect').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
     bars.select('title').text (t) ->
       "TCP##{t.stream.id} (#{t.stream.domain})\n" +
       "HTTP##{t.id} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +

@@ -59,7 +59,7 @@
       wireshark_begin = capture.packets[0].timestamp;
       scale = d3.scale.linear().domain([0, capture.end() - capture_begin]).range(['0%', '100%']);
       draw_packets = function(stripes, y, height) {
-        stripes.enter().append('rect').attr('class', 'packet').attr('height', height);
+        stripes.enter().append('rect').attr('height', height);
         stripes.attr('packet-id', function(packet) {
           return packet.id;
         }).attr('x', function(packet) {
@@ -71,7 +71,7 @@
         });
         return stripes.exit().remove();
       };
-      draw_packets(this.svg.select('#packets').selectAll('rect.packet').data(packets), 0, '100%');
+      draw_packets(this.svg.select('#packets').selectAll('rect').data(packets), 0, '100%');
       transactions = capture.transactions.filter(function(t) {
         return (t.request && t.response) || console.error('incomplete transaction:', t);
       });
@@ -81,18 +81,19 @@
       transaction_y = function(transaction) {
         return 2 * margin + (1 + 2 * margin) * (streams.indexOf(transaction.stream));
       };
-      bars = this.svg.selectAll('a.transaction').data(transactions);
-      as = bars.enter().append('a').attr('class', 'transaction');
+      bars = this.svg.select('#transactions').selectAll('a').data(transactions);
+      as = bars.enter().append('a');
       as.append('title');
       as.append('rect').attr('class', 'transaction-bar').attr('height', '1em');
       as.append('rect').attr('class', 'request').attr('height', '1em');
+      as.append('g').attr('class', 'packets');
       bars.attr('transaction-id', function(t) {
         return t.id;
       }).attr('xlink:href', function(t) {
         return t.request.url;
       });
       bars.each(function(t) {
-        return draw_packets(d3.select(this).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em');
+        return draw_packets(d3.select(this).select('g.packets').selectAll('rect').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em');
       });
       bars.select('title').text(function(t) {
         return ("TCP#" + t.stream.id + " (" + t.stream.domain + ")\n") + ("HTTP#" + t.id + " (" + (truncate(20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1))) + ")\n") + ("begin: " + ((t.request_begin(bandwidth) - wireshark_begin).toFixed(2)) + "s\n") + ("sending: " + (Math.round(t.request_duration(bandwidth) * 1000)) + "ms\n") + ("waiting: " + (Math.round((t.response_begin(bandwidth) - t.request_end()) * 1000)) + "ms\n") + ("receiving: " + (Math.round(t.response_duration(bandwidth) * 1000)) + "ms");
