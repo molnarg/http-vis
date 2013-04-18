@@ -101,14 +101,14 @@
                         <div class="popover-content">
                             <form id="filtering-and-bandwidth-options" class="navbar-form">
                                 <h2>Filtering and bandwidth</h2>
-                                <select id="server-dropdown"></select>
+                                <select id="server-dropdown" title="Only show packets from this server"></select>
                                 <div class="network-arrow" style="margin-top: 7px;">⇓</div>
                                 <div class="input-append">
-                                    <input id="bandwidth-input" style="width: 3em;" type="text">
+                                    <input type="text" id="bandwidth-input" style="width: 3em;" title="The bottleneck bandwidth between the client and the server.">
                                     <span class="add-on">kbps</span>
                                 </div>
                                 <div class="network-arrow" style="margin-top: -3px;">⇓</div>
-                                <select id="client-dropdown"></select>
+                                <select id="client-dropdown" title="Only show packets to this client"></select>
                             </form>
 
                             <form id="color-options" class="form-inline" style="text-align: right">
@@ -134,17 +134,17 @@
                             <form id="width-options" class="navbar-form">
                                 <h2 style="margin-top: 30px;">Width</h2>
                                 <div class="input-append">
-                                    <input disabled id="time-input" style="width: 2em;" type="text">
+                                    <input type="text" disabled id="time-input" style="width: 2em;" title="Length of the capture">
                                     <span class="add-on">s</span>
                                 </div>
                                 ×
                                 <div class="input-append">
-                                    <input id="width-s-input" style="width: 1.8em;" type="text">
+                                    <input type="text" id="width-s-input" style="width: 1.8em;" title="Width of a 1 second time frame">
                                     <span class="add-on">px</span>
                                 </div>
                                 =
                                 <div class="input-append">
-                                    <input id="width-input" style="width: 2.4em;" type="text">
+                                    <input type="text" id="width-input" style="width: 2.4em;" title="Width of the chart">
                                     <span class="add-on">px</span>
                                 </div>
                             </form>
