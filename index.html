@@ -42,18 +42,24 @@
             left: auto;
             right: 53px;
         }
-        #options .popover-content {
-            text-align: center;
-        }
         #options .popover-content input, #options .popover-content select {
             width: 242px;
         }
         #options .network-arrow {
             font-size: 16px;
         }
-        #options label {
+        #options h2 {
             text-align: left;
             font-weight: bold;
+            font-size: 1em;
+            margin: 0 0 5px;
+            line-height: inherit;
+        }
+        #options form {
+            margin: 0;
+        }
+        #options #filtering-and-bandwidth-options {
+            text-align: center;
         }
 
         .navbar-inner>.container {
@@ -83,8 +89,7 @@
         <div class="navbar-inner">
             <div class="container">
                 <a class="brand" href="#">http-vis</a>
-                <!--<p class="navbar-text pull-left">Every packet matters.</p>-->
-                <form class="navbar-form pull-right" style="margin-left: 4px;">
+                <div class="pull-right" style="margin-left: 4px;">
                     <div class="btn-group">
                         <button id="options-toggle" disabled class="btn dropdown-toggle"><i class="icon-wrench"></i></button>
                     </div>
@@ -94,42 +99,58 @@
                         <div class="arrow"></div>
                         <h3 class="popover-title">Options</h3>
                         <div class="popover-content">
-                            <label>Filtering and bandwidth</label>
-                            <select id="server-dropdown"></select>
-                            <div class="network-arrow" style="margin-top: 7px;">⇓</div>
-                            <div class="input-append">
-                                <input id="bandwidth-input" style="width: 3em;" type="text">
-                                <span class="add-on">kbps</span>
-                            </div>
-                            <div class="network-arrow" style="margin-top: -3px;">⇓</div>
-                            <select id="client-dropdown"></select>
+                            <form id="filtering-and-bandwidth-options" class="navbar-form">
+                                <h2>Filtering and bandwidth</h2>
+                                <select id="server-dropdown"></select>
+                                <div class="network-arrow" style="margin-top: 7px;">⇓</div>
+                                <div class="input-append">
+                                    <input id="bandwidth-input" style="width: 3em;" type="text">
+                                    <span class="add-on">kbps</span>
+                                </div>
+                                <div class="network-arrow" style="margin-top: -3px;">⇓</div>
+                                <select id="client-dropdown"></select>
+                            </form>
 
-                            <label style="margin-top: 30px;">Color packets by</label>
-                            <select id="color-dropdown">
-                                <option>stream</option>
-                                <option>domain</option>
-                                <option>content-type</option>
-                                <option>monochrome</option>
-                            </select>
+                            <form id="color-options" class="form-inline" style="text-align: right">
+                                <h2 style="margin-top: 30px;">Colors</h2>
+                                <label>
+                                    Color packets by
+                                    <select id="colorby-dropdown" style="width: 125px;">
+                                        <option>stream</option>
+                                        <option>domain</option>
+                                        <option>content-type</option>
+                                        <option>monochrome</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    Color theme
+                                    <select id="colortheme-dropdown" style="width: 125px;">
+                                        <option>dark</option>
+                                        <option>light</option>
+                                    </select>
+                                </label>
+                            </form>
 
-                            <label style="margin-top: 30px;">Width</label>
-                            <div class="input-append">
-                                <input disabled id="time-input" style="width: 2em;" type="text">
-                                <span class="add-on">s</span>
-                            </div>
-                            ×
-                            <div class="input-append">
-                                <input id="width-s-input" style="width: 1.8em;" type="text">
-                                <span class="add-on">px</span>
-                            </div>
-                            =
-                            <div class="input-append">
-                                <input id="width-input" style="width: 2.4em;" type="text">
-                                <span class="add-on">px</span>
-                            </div>
+                            <form id="width-options" class="navbar-form">
+                                <h2 style="margin-top: 30px;">Width</h2>
+                                <div class="input-append">
+                                    <input disabled id="time-input" style="width: 2em;" type="text">
+                                    <span class="add-on">s</span>
+                                </div>
+                                ×
+                                <div class="input-append">
+                                    <input id="width-s-input" style="width: 1.8em;" type="text">
+                                    <span class="add-on">px</span>
+                                </div>
+                                =
+                                <div class="input-append">
+                                    <input id="width-input" style="width: 2.4em;" type="text">
+                                    <span class="add-on">px</span>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </form>
+                </div>
                 <form class="navbar-form pull-right" style="margin-left: 4px;">
                     <input id="file-chooser" type="file">
                 </form>
@@ -156,7 +177,7 @@
                 transaction-id CDATA #IMPLIED>
         ]>
         -->
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="dark">
             <style type="text/css">
                 svg {
                     shape-rendering: crispEdges;
@@ -166,11 +187,12 @@
                 rect.transaction-bar {
                     fill: #FFF;
                     fill-opacity: 0.7;
-                    /*
+                }
+
+                .light rect.transaction-bar {
                     stroke: grey;
                     stroke-width: 0.1em;
                     stroke-opacity: 0.5;
-                    */
                 }
 
                 rect.request {
@@ -183,9 +205,8 @@
                     fill-opacity: 0.25;
                 }
 
-                rect#background {
-                    fill: black;
-                }
+                .dark rect#background { fill: black; }
+                .light rect#background { fill: white; }
 
                 .color-0 { fill: #004585; }
                 .color-1 { fill: #ff430f; }
@@ -203,7 +224,7 @@
                 .color-13 { fill: #0084d1; }
             </style>
             <rect id="background" width="100%" height="100%"></rect>
-            <g id="chart" class="dark">
+            <g id="chart">
                 <svg id="stackedarea" height="100"></svg>
                 <svg id="barcode" y="105">
                     <g id="packets" class="packets"></g>

@@ -96,10 +96,15 @@ $(function() {
     return false
   })
 
-  $('#color-dropdown').change(function() {
+  $('#colorby-dropdown').change(function() {
     color_by = this.selectedOptions[0].innerHTML
     palette = new Palette(filtered_capture, color_by)
     draw()
+  })
+
+  $('#colortheme-dropdown').change(function() {
+    var colortheme = this.selectedOptions[0].innerHTML
+    barcode_svg.attr('class', colortheme)
   })
 
   $('#bandwidth-input').change(function() {
