@@ -118,15 +118,17 @@ window.Barcode = class Barcode
       time = capture_begin + capture_duration * (event.clientX + window.scrollX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin
       @onmousemove time
     @svg.on 'mouseover', =>
-      event = d3.event
-      if event.target.parentNode.classList.toString() == 'packets'
-        packet = capture.capture.packets[event.target.getAttribute('packet-id')]
+      packet_id = d3.event.target.getAttribute('packet-id')
+      transaction_id = d3.event.target.parentNode.getAttribute('transaction-id')
+
+      if packet_id isnt null
+        packet = capture.capture.packets[packet_id]
         transaction = packet.transaction
         stream = transaction.stream
         @onmouseover(stream, transaction, packet)
 
-      else if event.target.parentNode.classList.toString() == 'transaction'
-        transaction = capture.capture.transactions[event.target.parentNode.getAttribute('transaction-id')]
+      else if transaction_id isnt null
+        transaction = capture.capture.transactions[transaction_id]
         stream = transaction.stream
         @onmouseover(stream, transaction)
 
