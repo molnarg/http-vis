@@ -4,7 +4,7 @@ truncate = (maxlength, str) ->
   else
     str.substr(0, maxlength - 1) + '...'
 
-window.Stripes = class Stripes
+window.Barcode = class Barcode
   margin = 0.1
 
   constructor: (svg) ->
@@ -50,7 +50,6 @@ window.Stripes = class Stripes
     # Drawing packets
     draw_packets = (stripes, y, height) ->
       stripes.enter().append('rect')
-        .attr('class', 'packet')
         .attr('height', height)
 
       stripes
@@ -58,22 +57,21 @@ window.Stripes = class Stripes
         .attr('x', (packet) -> scale(packet.timestamp - duration(packet) - capture_begin))
         .attr('y', y)
         .attr('width', (packet) -> scale(duration(packet)))
-        .attr('fill', (packet) -> palette.color(packet.transaction))
+        .attr('class', (packet) -> 'color-' + palette.color(packet.transaction))
 
       stripes.exit().remove()
 
-    draw_packets @svg.select('#packets').selectAll('rect.packet').data(packets), 0, '100%'
+    draw_packets @svg.select('#packets').selectAll('rect').data(packets), 0, '100%'
 
     # Drawing transactions
     transactions = capture.transactions.filter (t) -> (t.request and t.response) or console.error('incomplete transaction:', t)
     streams = capture.streams.filter (stream) -> stream.transactions.length isnt 0
     transaction_y = (transaction) -> 2*margin + (1 + 2*margin) * (streams.indexOf transaction.stream)
 
-    bars = @svg.selectAll('a.transaction').data(transactions)
+    bars = @svg.select('#transactions').selectAll('a').data(transactions)
 
     # Transactions enter
     as = bars.enter().append('a')
-      .attr('class', 'transaction')
     as.append('title')
     as.append('rect')
       .attr('class', 'transaction-bar')
@@ -81,12 +79,14 @@ window.Stripes = class Stripes
     as.append('rect')
       .attr('class', 'request')
       .attr('height', '1em')
+    as.append('g')
+      .attr('class', 'packets')
 
     # Transactions change
     bars
       .attr('transaction-id', (t) -> t.id)
       .attr('xlink:href', (t) -> t.request.url)
-    bars.each((t) -> draw_packets d3.select(@).selectAll('rect.packet').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
+    bars.each((t) -> draw_packets d3.select(@).select('g.packets').selectAll('rect').data(t.packets_in), transaction_y(t) + 0.1 + 'em', '0.8em')
     bars.select('title').text (t) ->
       "TCP##{t.stream.id} (#{t.stream.domain})\n" +
       "HTTP##{t.id} (#{truncate 20, t.request.url.substr(t.request.url.lastIndexOf('/') + 1)})\n" +
@@ -109,24 +109,26 @@ window.Stripes = class Stripes
 
     # SVG size
     em = Number(getComputedStyle(bars[0][0], "").fontSize.match(/(\d*(\.\d*)?)px/)[1])
-    @svg.attr('height', (2*margin + streams.length * (1 + 2*margin)) * em + 'px')
+    @svg.attr('height', (2*margin + streams.length * (1 + 2*margin)) * em + 105 + 'px')
 
     # Events
     svg_dom = @svg[0][0]
     @svg.on 'mousemove', =>
       event = d3.event
-      time = capture_begin + capture_duration * (event.clientX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin
+      time = capture_begin + capture_duration * (event.clientX + window.scrollX - svg_dom.offsetLeft) / svg_dom.clientWidth - wireshark_begin
       @onmousemove time
     @svg.on 'mouseover', =>
-      event = d3.event
-      if event.target.classList.toString() == 'packet'
-        packet = capture.capture.packets[event.target.getAttribute('packet-id')]
+      packet_id = d3.event.target.getAttribute('packet-id')
+      transaction_id = d3.event.target.parentNode.getAttribute('transaction-id')
+
+      if packet_id isnt null
+        packet = capture.capture.packets[packet_id]
         transaction = packet.transaction
         stream = transaction.stream
         @onmouseover(stream, transaction, packet)
 
-      else if event.target.parentNode.classList.toString() == 'transaction'
-        transaction = capture.capture.transactions[event.target.parentNode.getAttribute('transaction-id')]
+      else if transaction_id isnt null
+        transaction = capture.capture.transactions[transaction_id]
         stream = transaction.stream
         @onmouseover(stream, transaction)
 

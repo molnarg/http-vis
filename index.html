@@ -13,11 +13,9 @@
     <script src="vendor/http-parser.min.js"></script>
     <script src="vendor/bootstrap-filestyle-0.1.0.min.js"></script>
     <script src="vendor/FileSaver.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
 
-    <script src="js/Capture.js"></script>
-    <script src="js/Stripes.js"></script>
-    <script src="js/Histogram.js"></script>
-    <script src="js/Palette.js"></script>
+    <script src="js/http-vis.js"></script>
 
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.css">
     <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap-responsive.css">
@@ -26,6 +24,9 @@
         body {
             padding-top: 40px;
             background-color: black;
+        }
+        .popover {
+            max-width: 450px;
         }
         #options {
             position: absolute;
@@ -41,22 +42,35 @@
             left: auto;
             right: 53px;
         }
-        #options .popover-content {
-            text-align: center;
-        }
         #options .popover-content input, #options .popover-content select {
             width: 242px;
         }
         #options .network-arrow {
             font-size: 16px;
         }
-        #options label {
+        #options h2 {
             text-align: left;
             font-weight: bold;
+            font-size: 1em;
+            margin: 0 0 5px;
+            line-height: inherit;
+        }
+        #options form {
+            margin: 0;
+        }
+        #options #filtering-and-bandwidth-options {
+            text-align: center;
         }
 
-        #histogram-container svg {
-            height: 100px;
+        #hints {
+            display: none;
+        }
+        #hints>* {
+            position: absolute;
+        }
+        .next-hint {
+            display: block;
+            text-align: right;
         }
 
         .navbar-inner>.container {
@@ -78,6 +92,15 @@
         #http-info   { width: 5.5em; }
         #packet-info { width: 8em; }
         #loading     { display: none; }
+
+        #barcode-container {
+            display: none;
+        }
+
+        #intro {
+            color: #ccc;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -86,8 +109,7 @@
         <div class="navbar-inner">
             <div class="container">
                 <a class="brand" href="#">http-vis</a>
-                <!--<p class="navbar-text pull-left">Every packet matters.</p>-->
-                <form class="navbar-form pull-right" style="margin-left: 4px;">
+                <div class="pull-right" style="margin-left: 4px;">
                     <div class="btn-group">
                         <button id="options-toggle" disabled class="btn dropdown-toggle"><i class="icon-wrench"></i></button>
                     </div>
@@ -97,47 +119,60 @@
                         <div class="arrow"></div>
                         <h3 class="popover-title">Options</h3>
                         <div class="popover-content">
-                            <label>Filtering and bandwidth</label>
-                            <select id="server-dropdown"></select>
-                            <div class="network-arrow" style="margin-top: 7px;">⇓</div>
-                            <div class="input-append">
-                                <input id="bandwidth-input" style="width: 3em;" type="text">
-                                <span class="add-on">kbps</span>
-                            </div>
-                            <div class="network-arrow" style="margin-top: -3px;">⇓</div>
-                            <select id="client-dropdown"></select>
+                            <form id="filtering-and-bandwidth-options" class="navbar-form">
+                                <h2>Filtering and bandwidth</h2>
+                                <select id="server-dropdown" title="Only show packets from this server"></select>
+                                <div class="network-arrow" style="margin-top: 7px;">⇓</div>
+                                <div class="input-append">
+                                    <input type="text" id="bandwidth-input" style="width: 3em;" title="The bottleneck bandwidth between the client and the server.">
+                                    <span class="add-on">kbps</span>
+                                </div>
+                                <div class="network-arrow" style="margin-top: -3px;">⇓</div>
+                                <select id="client-dropdown" title="Only show packets to this client"></select>
+                            </form>
 
-                            <label style="margin-top: 30px;">Color packets by</label>
-                            <select id="color-dropdown">
-                                <option>stream</option>
-                                <option>domain</option>
-                                <option>content-type</option>
-                                <option>monochrome</option>
-                            </select>
+                            <form id="color-options" class="form-inline" style="text-align: right">
+                                <h2 style="margin-top: 30px;">Colors</h2>
+                                <label>
+                                    Color packets by
+                                    <select id="colorby-dropdown" style="width: 125px;">
+                                        <option>stream</option>
+                                        <option>domain</option>
+                                        <option>content-type</option>
+                                        <option>monochrome</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    Color theme
+                                    <select id="colortheme-dropdown" style="width: 125px;">
+                                        <option>dark</option>
+                                        <option>light</option>
+                                    </select>
+                                </label>
+                            </form>
 
-                            <label style="margin-top: 30px;">Width</label>
-                            <div class="input-append">
-                                <input disabled id="time-input" style="width: 2em;" type="text">
-                                <span class="add-on">s</span>
-                            </div>
-                            ×
-                            <div class="input-append">
-                                <input id="width-s-input" style="width: 1.8em;" type="text">
-                                <span class="add-on">px</span>
-                            </div>
-                            =
-                            <div class="input-append">
-                                <input id="width-input" style="width: 2.4em;" type="text">
-                                <span class="add-on">px</span>
-                            </div>
+                            <form id="width-options" class="navbar-form">
+                                <h2 style="margin-top: 30px;">Width</h2>
+                                <div class="input-append">
+                                    <input type="text" disabled id="time-input" style="width: 2em;" title="Length of the capture">
+                                    <span class="add-on">s</span>
+                                </div>
+                                ×
+                                <div class="input-append">
+                                    <input type="text" id="width-s-input" style="width: 1.8em;" title="Width of a 1 second time frame">
+                                    <span class="add-on">px</span>
+                                </div>
+                                =
+                                <div class="input-append">
+                                    <input type="text" id="width-input" style="width: 2.4em;" title="Width of the chart">
+                                    <span class="add-on">px</span>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </form>
+                </div>
                 <form class="navbar-form pull-right" style="margin-left: 4px;">
                     <input id="file-chooser" type="file">
-                </form>
-                <form class="navbar-form pull-right">
-                    <button id="load-example" class="btn"><i class="icon-folder-open"></i> Load example</button>
                 </form>
                 <p id="navbar-info" class="navbar-text">
                     <span id="loading">loading...</span>
@@ -150,19 +185,16 @@
         </div>
     </div>
 
-    <div id="histogram-container">
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
-        </svg>
-    </div>
-
-    <div id="stripes-container">
+    <div id="barcode-container">
         <!--
         <?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
-            <!ATTLIST rect packet-id CDATA #IMPLIED>
+            <!ATTLIST rect
+                packet-id CDATA #IMPLIED
+                transaction-id CDATA #IMPLIED>
         ]>
         -->
-        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" class="dark">
             <style type="text/css">
                 svg {
                     shape-rendering: crispEdges;
@@ -172,11 +204,12 @@
                 rect.transaction-bar {
                     fill: #FFF;
                     fill-opacity: 0.7;
-                    /*
+                }
+
+                .light rect.transaction-bar {
                     stroke: grey;
                     stroke-width: 0.1em;
                     stroke-opacity: 0.5;
-                    */
                 }
 
                 rect.request {
@@ -189,175 +222,116 @@
                     fill-opacity: 0.25;
                 }
 
-                rect#background {
-                    fill: black;
-                }
+                rect#background { fill: black; }
+                .color-0 { fill: #004585; }
+                .color-1 { fill: #ff430f; }
+                .color-2 { fill: #ffd21f; }
+                .color-3 { fill: #559c1c; }
+                .color-4 { fill: #800022; }
+                .color-5 { fill: #85caff; }
+                .color-6 { fill: #303e04; }
+                .color-7 { fill: #aed100; }
+                .color-8 { fill: #4b1f6f; }
+                .color-9 { fill: #ff970f; }
+                .color-10 { fill: #c7000a; }
+                .color-11 { fill: #e1095c; }
+                .color-12 { fill: #06e554; }
+                .color-13 { fill: #0084d1; }
+
+                .light rect#background { fill: white; }
+                .light .color-0 { fill: #144471; }
+                .light .color-1 { fill: #db5733; }
+                .light .color-2 { fill: #ddbe41; }
+                .light .color-3 { fill: #588038; }
+                .light .color-4 { fill: #6d132b; }
+                .light .color-5 { fill: #97c8ed; }
+                .light .color-6 { fill: #2b340e; }
+                .light .color-7 { fill: #99b21f; }
+                .light .color-8 { fill: #49345a; }
+                .light .color-9 { fill: #db9233; }
+                .light .color-10 { fill: #a91e25; }
+                .light .color-11 { fill: #be2c64; }
+                .light .color-12 { fill: #29c25f; }
+                .light .color-13 { fill: #1f7cb2; }
             </style>
             <rect id="background" width="100%" height="100%"></rect>
-            <g id="packets"></g>
+            <g id="chart">
+                <svg id="stackedarea" height="100"></svg>
+                <svg id="barcode" y="105">
+                    <g id="packets" class="packets"></g>
+                    <g id="transactions"></g>
+                </svg>
+            </g>
         </svg>
     </div>
 
-    <script>
-        function notsupported() {
-            alert('Sorry, this browser is not yet supported. Please come back with Chrome or Chromium.')
-        }
-        try {
-            if (typeof Packet.views.PcapFile !== 'function') notsupported()
-        } catch(e) {
-            notsupported()
-        }
+    <div id="hints">
+        <i style="left: 42.5%; top: 105px;"
+           class="icon-info-sign icon-white"
+           title="Stacked bar chart"
+           data-content="The stacked bar chart on the top shows the link utilization over time (horizontal axis),
+                         similar to the Wireshark IO Graph.
+                         The coloring is always consistent with the rest of the chart."
+        ></i>
 
-        var stripes_svg = $('#stripes-container>svg')
-          , histogram_svg = $('#histogram-container>svg')
+        <i style="left: 33%; top: 169px;"
+           class="icon-info-sign icon-white"
+           title="Packets"
+           data-content="On the barcode chart, packets are denoted by narrow, colored vertical bars.
+                         The width of each bar is equal to the time needed to transmit the corresponding packet:
+                         (<code>packet_size / bandwidth</code>). The two chart share the same horizontal axis (time)."
+        ></i>
 
-        var width = $(document).width()
-        stripes_svg.attr('width', width + 'px')
-        histogram_svg.attr('width', width + 'px')
+        <i style="position: fixed; left: 446px; top: 12px; z-index: 2000;"
+           class="icon-info-sign icon-white"
+           data-placement="bottom"
+           title="Information bar"
+           data-content="The info bar shows useful information about the packet pointed to by the mouse pointer.
+                         The numbering is always consistent with Wireshark.
+                         TCP and HTTP counters start from 0, packet counter starts from 1."
+           onclick="var packet = filtered_capture.packets[10];
+                    barcode.onmousemove(0.2);
+                    barcode.onmouseover(packet.transaction.stream, packet.transaction, packet);"
+        ></i>
 
-        var stripes = new Stripes(stripes_svg[0])
-        var stacked = new Histogram(histogram_svg[0])
+        <i style="left: 25%; top: 269px;"
+           class="icon-info-sign icon-white"
+           title="HTTP request"
+           data-content='HTTP requests are denoted by semi-transparent horizontal bars.
+                         The three denoted phases of an HTTP transaction are: 1. connection setup
+                         2. sending request and waiting 3. receiving response. Packets that belong to the
+                         transation are emphasized.
+                         <img width="449" height="181" src="img/legend-1.svg">'
+        ></i>
 
-        var capture, filtered_capture, palette, color_by = 'stream', bandwidth, duration
+        <i style="left: 61%; top: 269px;"
+           class="icon-info-sign icon-white"
+           title="TCP streams"
+           data-content="HTTP requests that are in the same row correspond to the same TCP connection.
+                         The packets that are in the same stream have the same color. The coloring scheme
+                         can be changed on the options panel."
+        ></i>
 
-        function draw() {
-            stripes.draw(filtered_capture, palette, bandwidth)
-            stacked.draw(filtered_capture, palette, bandwidth, 125)
-        }
+        <i style="position: fixed; right: 280px; top: 12px; z-index: 2000;"
+           class="icon-info-sign icon-white"
+           data-placement="bottom"
+           title="Control buttons"
+           data-content="Click on the wrench button to see the options panel. Click on the download button
+                         to save the diagram in SVG (Scalable Vector Graphics) format."
+        ></i>
+    </div>
 
-        function filter(client, server) {
-            if (client === 'any client') client = undefined
-            if (server === 'any server') server = undefined
-            filtered_capture = capture.filter(client, server)
-            var kbit = filtered_capture.bandwidth()
-            $('#bandwidth-input').val(Math.round(kbit))
-            bandwidth = kbit * 1000 / 8
-            duration = filtered_capture.duration(bandwidth)
-            palette = new Palette(filtered_capture, color_by)
-        }
+    <div id="intro">
+        <h1 style="margin: 1em">http-vis - a HTTP visualisation experiment</h1>
 
-        function options(dropdown, options) {
-            dropdown.html(options.map(function(text) { return '<option>' + text + '</option>'}).join(''))
-        }
+        <p>This application explores new ways to visualise web page download traces.</p>
+        <p>The presented visualisation methods are most useful when analyzing web site downloads on low-bandwidth (<2Mbit) links.</p>
 
-        function load(pcap) {
-            capture = new Capture(pcap)
-            filter(undefined, undefined)
-            draw()
+        <p style="margin-top: 4em; font-weight: bold;">To get a quick overview, click here:</p>
+        <button id="load-example" class="btn"><i class="icon-folder-open"></i> Load example.pcap</button>
 
-            options($('#client-dropdown'), ['any client'].concat(capture.clients()))
-            options($('#server-dropdown'), ['any server'].concat(capture.servers()))
-            $('#time-input').val(Math.round(duration*10)/10)
-            $('#width-input').val(Math.round(width))
-            $('#width-s-input').val(Math.round(width / duration))
-            $('#options-toggle').prop('disabled', false)
-            $('#download-button').prop('disabled', false)
-            $('#loading').hide()
-        }
-
-        $('#load-example').click(function() {
-            $('#loading').show()
-            setTimeout(function() {
-                var xhr = new XMLHttpRequest()
-                xhr.open('GET', 'example/example.pcap', true)
-                xhr.responseType = 'arraybuffer'
-                xhr.onload = function() { load(this.response) }
-                xhr.send()
-            }, 0)
-            return false
-        })
-
-        $("#file-chooser").filestyle({
-            buttonText: 'Choose PCAP file',
-            icon: true,
-            classIcon: 'icon-folder-open',
-            textField: false
-        }).change(function() {
-            $('#loading').show()
-            var file = this.files[0]
-            var reader = new FileReader()
-            reader.readAsArrayBuffer(file)
-            reader.onload = function() { load(new DataView(reader.result)) }
-        })
-
-        var options_panel = $('#options'), options_toggle = $('#options-toggle')
-        options_toggle.click(function() {
-            options_toggle.parent().toggleClass('open')
-            options_panel.toggle()
-            return false
-        })
-        $('body').click(function(event) {
-            if (options_panel.has(event.target).length === 0) {
-                options_panel.hide()
-                options_toggle.parent().removeClass('open')
-            }
-        })
-
-        $('#download-button').click(function() {
-            stripes.download('svg')
-            return false
-        })
-
-        $('#color-dropdown').change(function() {
-            color_by = this.selectedOptions[0].innerHTML
-            palette = new Palette(filtered_capture, color_by)
-            draw()
-        })
-
-        $('#bandwidth-input').change(function() {
-            bandwidth = Number(this.value) * 1000 / 8
-            draw()
-        })
-
-        $('#width-input').change(function() {
-            stripes_svg.attr('width', this.value + 'px')
-            histogram_svg.attr('width', this.value + 'px')
-            $('#width-s-input').val(Math.round(this.value / duration))
-        })
-
-        $('#width-s-input').change(function() {
-            $('#width-input').val(Math.round(this.value * duration)).change()
-        })
-
-        var clients_dropdown = document.getElementById('client-dropdown')
-          , servers_dropdown = document.getElementById('server-dropdown')
-        clients_dropdown.onchange = servers_dropdown.onchange = function filter_change() {
-            var selected_client = clients_dropdown.selectedOptions[0].innerHTML
-            var selected_server = servers_dropdown.selectedOptions[0].innerHTML
-            filter(selected_client, selected_server)
-            draw()
-        }
-
-        var time_info = $('#time-info')
-        stripes.onmousemove = function(time) {
-            time_info.text(Math.max(0, time).toFixed(2) + 's')
-        }
-
-        var hide_timeout, packet_info = $('#packet-info'), tcp_info = $('#tcp-info'), http_info = $('#http-info')
-        stripes.onmouseover = function(stream, transaction, packet) {
-            if (packet) {
-                clearTimeout(hide_timeout)
-                packet_info.text('packet #' + (packet.id + 1))
-                tcp_info.text('TCP #' + stream.id)
-                http_info.text('HTTP #' + transaction.id)
-
-            } else if (stream) {
-                clearTimeout(hide_timeout)
-                tcp_info.text('TCP #' + stream.id)
-                http_info.text('HTTP #' + transaction.id)
-                hide_timeout = setTimeout(function() {
-                    packet_info.text('')
-                }, 200)
-
-            } else {
-                hide_timeout = setTimeout(function() {
-                    packet_info.text('')
-                    tcp_info.text('')
-                    http_info.text('')
-                }, 200)
-            }
-        }
-    </script>
+        <p style="margin: 4em">Issue tracking and source code: <a href="https://github.com/molnarg/http-vis">github.com/molnarg/http-vis</a></p>
+    </div>
 
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

@@ -1,7 +1,7 @@
 Packet = window.Packet
 HTTPParser = window.HTTPParser
 
-packet_begin = (packet, bandwidth) -> packet.timestamp - packet.size / bandwidth
+packet_begin_time = (packet, bandwidth) -> packet.timestamp - packet.size / bandwidth
 
 window.Capture = class Capture
   constructor: (pcap) ->
@@ -46,7 +46,7 @@ window.Capture = class Capture
   packets_in: -> @packets.filter (packet) -> packet in packet.transaction.packets_in
   packets_out: -> @packets.filter (packet) -> packet in packet.transaction.packets_out
 
-  begin: (bandwidth) -> packet_begin @packets[0], bandwidth
+  begin: (bandwidth) -> packet_begin_time @packets[0], bandwidth
   end: -> @packets[@packets.length - 1].timestamp
   duration: (bandwidth) -> @end() - @begin(bandwidth)
 
@@ -147,13 +147,13 @@ class Transaction
         connection.removeAllListeners(event) for event in ['data', 'end'] # don't listen anymore
         onend() # report that we are ready
 
-  begin: (bandwidth) -> packet_begin(@packets[0], bandwidth)
+  begin: (bandwidth) -> packet_begin_time @packets[0], bandwidth
   end: -> packets[packets.length - 1].timestamp
 
-  request_begin: (bandwidth) -> packet_begin @request_first, bandwidth
+  request_begin: (bandwidth) -> packet_begin_time @request_first, bandwidth
   request_end: -> @request_last.timestamp
   request_duration: (bandwidth) -> @request_end() - @request_begin(bandwidth)
 
-  response_begin: (bandwidth) -> packet_begin @response_first, bandwidth
+  response_begin: (bandwidth) -> packet_begin_time @response_first, bandwidth
   response_end: -> @response_last.timestamp
   response_duration: (bandwidth) -> @response_end() - @response_begin(bandwidth)
