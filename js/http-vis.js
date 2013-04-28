@@ -540,6 +540,8 @@
     duration = void 0;
     palette = void 0;
     draw = function() {
+      $('#intro').hide();
+      $('#barcode-container').show();
       barcode.draw(filtered_capture, palette, bandwidth);
       return stacked.draw(filtered_capture, palette, bandwidth, 125);
     };
@@ -569,6 +571,7 @@
     };
     $('#load-example').click(function() {
       $('#loading').show();
+      $(this).html('Please wait...').prop('disabled', true);
       timeout(0, function() {
         return window.load_example(load);
       });

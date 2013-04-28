@@ -33,6 +33,8 @@ $ ->
   palette = undefined
 
   draw = ->
+    $('#intro').hide()
+    $('#barcode-container').show()
     barcode.draw filtered_capture, palette, bandwidth
     stacked.draw filtered_capture, palette, bandwidth, 125
 
@@ -63,6 +65,7 @@ $ ->
   # Load example file
   $('#load-example').click ->
     $('#loading').show()
+    $(this).html('Please wait...').prop('disabled', true)
     timeout 0, -> window.load_example load
     return false
 

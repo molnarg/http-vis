@@ -92,6 +92,15 @@
         #http-info   { width: 5.5em; }
         #packet-info { width: 8em; }
         #loading     { display: none; }
+
+        #barcode-container {
+            display: none;
+        }
+
+        #intro {
+            color: #ccc;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -164,9 +173,6 @@
                 </div>
                 <form class="navbar-form pull-right" style="margin-left: 4px;">
                     <input id="file-chooser" type="file">
-                </form>
-                <form class="navbar-form pull-right">
-                    <button id="load-example" class="btn"><i class="icon-folder-open"></i> Load example</button>
                 </form>
                 <p id="navbar-info" class="navbar-text">
                     <span id="loading">loading...</span>
@@ -306,14 +312,25 @@
                          can be changed on the options panel."
         ></i>
 
-        <i style="position: fixed; right: 420px; top: 12px; z-index: 2000;"
+        <i style="position: fixed; right: 280px; top: 12px; z-index: 2000;"
            class="icon-info-sign icon-white"
            data-placement="bottom"
            title="Control buttons"
            data-content="Click on the wrench button to see the options panel. Click on the download button
                          to save the diagram in SVG (Scalable Vector Graphics) format."
         ></i>
+    </div>
 
+    <div id="intro">
+        <h1 style="margin: 1em">http-vis - a HTTP visualisation experiment</h1>
+
+        <p>This application explores new ways to visualise web page download traces.</p>
+        <p>The presented visualisation methods are most useful when analyzing web site downloads on low-bandwidth (<2Mbit) links.</p>
+
+        <p style="margin-top: 4em; font-weight: bold;">To get a quick overview, click here:</p>
+        <button id="load-example" class="btn"><i class="icon-folder-open"></i> Load example.pcap</button>
+
+        <p style="margin: 4em">Issue tracking and source code: <a href="https://github.com/molnarg/http-vis">github.com/molnarg/http-vis</a></p>
     </div>
 
 </body>
