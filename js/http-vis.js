@@ -748,41 +748,45 @@
     };
 
     function Palette(capture, method) {
-      var color, content_colors, content_type, domain_colors, next_color, stream, transaction, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var color, content_colors, content_type, domain_colors, next_color, stream, stream_colors, transaction, _i, _j, _k, _l, _len, _len1, _len2, _len3, _name, _name1, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
 
       this.method = method;
       this.transaction_colors = {};
       next_color = 0;
       switch (this.method) {
         case 'stream':
+          stream_colors = {};
           _ref = capture.transactions;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             transaction = _ref[_i];
-            this.transaction_colors[transaction.id] = next_color++;
+            if ((_ref1 = stream_colors[_name = transaction.stream.id]) == null) {
+              stream_colors[_name] = next_color++;
+            }
+            this.transaction_colors[transaction.id] = stream_colors[transaction.stream.id];
           }
           break;
         case 'domain':
           domain_colors = {};
-          _ref1 = capture.streams;
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            stream = _ref1[_j];
-            if ((_ref2 = domain_colors[_name = stream.domain]) == null) {
-              domain_colors[_name] = next_color++;
+          _ref2 = capture.streams;
+          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+            stream = _ref2[_j];
+            if ((_ref3 = domain_colors[_name1 = stream.domain]) == null) {
+              domain_colors[_name1] = next_color++;
             }
             color = domain_colors[stream.domain];
-            _ref3 = stream.transactions;
-            for (_k = 0, _len2 = _ref3.length; _k < _len2; _k++) {
-              transaction = _ref3[_k];
+            _ref4 = stream.transactions;
+            for (_k = 0, _len2 = _ref4.length; _k < _len2; _k++) {
+              transaction = _ref4[_k];
               this.transaction_colors[transaction.id] = color;
             }
           }
           break;
         case 'content-type':
           content_colors = {};
-          _ref4 = capture.transactions;
-          for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-            transaction = _ref4[_l];
-            content_type = (_ref5 = transaction.response) != null ? _ref5.headers['content-type'] : void 0;
+          _ref5 = capture.transactions;
+          for (_l = 0, _len3 = _ref5.length; _l < _len3; _l++) {
+            transaction = _ref5[_l];
+            content_type = (_ref6 = transaction.response) != null ? _ref6.headers['content-type'] : void 0;
             if (content_type != null ? content_type.match(/javascript/) : void 0) {
               content_type = 'javascript';
             }
@@ -792,7 +796,7 @@
             if (content_type != null ? content_type.match(/html/) : void 0) {
               content_type = 'html';
             }
-            if ((_ref6 = content_colors[content_type]) == null) {
+            if ((_ref7 = content_colors[content_type]) == null) {
               content_colors[content_type] = next_color++;
             }
             color = content_colors[content_type];

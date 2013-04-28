@@ -11,8 +11,10 @@ window.Palette = class Palette
 
     switch @method
       when 'stream'
+        stream_colors = {}
         for transaction in capture.transactions
-          @transaction_colors[transaction.id] = next_color++
+          stream_colors[transaction.stream.id] ?= next_color++
+          @transaction_colors[transaction.id] = stream_colors[transaction.stream.id]
 
       when 'domain'
         domain_colors = {}
