@@ -15,8 +15,8 @@ $ ->
 
   # View objects
   svg = $('#barcode-container>svg')
-  barcode = new Barcode(svg[0])
-  stacked = new StackedArea(svg[0])
+  barcode = window.barcode = new Barcode(svg[0])
+  stacked = window.stacked = new StackedArea(svg[0])
 
   # Options
   client = undefined
@@ -37,7 +37,7 @@ $ ->
     stacked.draw filtered_capture, palette, bandwidth, 125
 
   prepare = ->
-    filtered_capture = capture.filter client, server
+    window.filtered_capture = filtered_capture = capture.filter client, server
     kbit = filtered_capture.bandwidth()
     $('#bandwidth-input').val Math.round(kbit)
     bandwidth = kbit * 1000 / 8
@@ -58,16 +58,12 @@ $ ->
     $('#options-toggle').prop 'disabled', false
     $('#download-button').prop 'disabled', false
     $('#loading').hide()
+    $('#hints').hide()
 
   # Load example file
   $('#load-example').click ->
     $('#loading').show()
-    timeout 0, ->
-      xhr = new XMLHttpRequest()
-      xhr.open 'GET', 'example/example.pcap', true
-      xhr.responseType = 'arraybuffer'
-      xhr.onload = -> load @response
-      xhr.send()
+    timeout 0, -> window.load_example load
     return false
 
   # File open button handling

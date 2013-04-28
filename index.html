@@ -13,6 +13,7 @@
     <script src="vendor/http-parser.min.js"></script>
     <script src="vendor/bootstrap-filestyle-0.1.0.min.js"></script>
     <script src="vendor/FileSaver.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
 
     <script src="js/http-vis.js"></script>
 
@@ -23,6 +24,9 @@
         body {
             padding-top: 40px;
             background-color: black;
+        }
+        .popover {
+            max-width: 450px;
         }
         #options {
             position: absolute;
@@ -56,6 +60,17 @@
         }
         #options #filtering-and-bandwidth-options {
             text-align: center;
+        }
+
+        #hints {
+            display: none;
+        }
+        #hints>* {
+            position: absolute;
+        }
+        .next-hint {
+            display: block;
+            text-align: right;
         }
 
         .navbar-inner>.container {
@@ -243,6 +258,64 @@
             </g>
         </svg>
     </div>
+
+    <div id="hints">
+        <i style="left: 42.5%; top: 105px;"
+           class="icon-info-sign icon-white"
+           title="Stacked bar chart"
+           data-content="The stacked bar chart on the top shows the link utilization over time (horizontal axis),
+                         similar to the Wireshark IO Graph.
+                         The coloring is always consistent with the rest of the chart."
+        ></i>
+
+        <i style="left: 33%; top: 169px;"
+           class="icon-info-sign icon-white"
+           title="Packets"
+           data-content="On the barcode chart, packets are denoted by narrow, colored vertical bars.
+                         The width of each bar is equal to the time needed to transmit the corresponding packet:
+                         (<code>packet_size / bandwidth</code>). The two chart share the same horizontal axis (time)."
+        ></i>
+
+        <i style="position: fixed; left: 446px; top: 12px; z-index: 2000;"
+           class="icon-info-sign icon-white"
+           data-placement="bottom"
+           title="Information bar"
+           data-content="The info bar shows useful information about the packet pointed to by the mouse pointer.
+                         The numbering is always consistent with Wireshark.
+                         TCP and HTTP counters start from 0, packet counter starts from 1."
+           onclick="var packet = filtered_capture.packets[10];
+                    barcode.onmousemove(0.2);
+                    barcode.onmouseover(packet.transaction.stream, packet.transaction, packet);"
+        ></i>
+
+        <i style="left: 25%; top: 269px;"
+           class="icon-info-sign icon-white"
+           title="HTTP request"
+           data-content='HTTP requests are denoted by semi-transparent horizontal bars.
+                         The three denoted phases of an HTTP transaction are: 1. connection setup
+                         2. sending request and waiting 3. receiving response. Packets that belong to the
+                         transation are emphasized.
+                         <img width="449" height="181" src="img/legend-1.svg">'
+        ></i>
+
+        <i style="left: 61%; top: 269px;"
+           class="icon-info-sign icon-white"
+           title="TCP streams"
+           data-content="HTTP requests that are in the same row correspond to the same TCP connection.
+                         The packets that are in the same stream have the same color. The coloring scheme
+                         can be changed on the options panel."
+        ></i>
+
+        <i style="position: fixed; right: 420px; top: 12px; z-index: 2000;"
+           class="icon-info-sign icon-white"
+           data-placement="bottom"
+           title="Control buttons"
+           data-content="Click on the wrench button to see the options panel. Click on the download button
+                         to save the diagram in SVG (Scalable Vector Graphics) format."
+        ></i>
+
+    </div>
+
 </body>
 
 </html>
