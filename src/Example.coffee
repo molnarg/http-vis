@@ -31,6 +31,10 @@ load_hints = ->
   $('#hints').show()
   $('#hints>*').first().popover('show')
 
+  # Preload images needed for other hints:
+  preload = new Image()
+  preload.src = "img/legend-request.svg"
+
 window.load_example = (load_pcap) ->
   xhr = new XMLHttpRequest()
   xhr.open 'GET', 'example/example.pcap', true
