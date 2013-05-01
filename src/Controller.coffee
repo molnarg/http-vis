@@ -109,6 +109,9 @@ $ ->
   $('#colortheme-dropdown').change ->
     svg.attr 'class', this.selectedOptions[0].innerHTML
 
+  $('#emphasize-dropdown').change ->
+    svg.find('#packets').attr 'class', 'packets emphasize-' + this.selectedOptions[0].innerHTML
+
   # Bandwidth options handling
   $('#bandwidth-input').change ->
     bandwidth = Number(this.value) * 1000 / 8

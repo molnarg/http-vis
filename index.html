@@ -135,7 +135,7 @@
                                 <h2 style="margin-top: 30px;">Colors</h2>
                                 <label>
                                     Color packets by
-                                    <select id="colorby-dropdown" style="width: 125px;">
+                                    <select id="colorby-dropdown" style="width: 120px;">
                                         <option>stream</option>
                                         <option>domain</option>
                                         <option>content-type</option>
@@ -144,9 +144,17 @@
                                 </label>
                                 <label>
                                     Color theme
-                                    <select id="colortheme-dropdown" style="width: 125px;">
+                                    <select id="colortheme-dropdown" style="width: 120px;">
                                         <option>dark</option>
                                         <option>light</option>
+                                    </select>
+                                </label>
+                                <label>
+                                    Req. emphasizing
+                                    <select id="emphasize-dropdown" style="width: 120px;">
+                                        <option>no</option>
+                                        <option>light</option>
+                                        <option>heavy</option>
                                     </select>
                                 </label>
                             </form>
@@ -221,6 +229,9 @@
                     fill: #005;
                     fill-opacity: 0.25;
                 }
+
+                #packets.emphasize-light { fill-opacity: 0.8; }
+                #packets.emphasize-heavy { fill-opacity: 0.5; }
 
                 rect#background { fill: black; }
                 .color-0 { fill: #004585; }
@@ -303,7 +314,6 @@
                          transation are emphasized.
                          <img width="449" height="181" src="img/legend-request.svg">'
         ></i>
-        <img style="display: none" src="img/legend-request.svg"> <!-- prefetching the legend image -->
 
         <i style="left: 61%; top: 269px;"
            class="icon-info-sign icon-white"

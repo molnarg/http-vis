@@ -618,6 +618,9 @@
     $('#colortheme-dropdown').change(function() {
       return svg.attr('class', this.selectedOptions[0].innerHTML);
     });
+    $('#emphasize-dropdown').change(function() {
+      return svg.find('#packets').attr('class', 'packets emphasize-' + this.selectedOptions[0].innerHTML);
+    });
     $('#bandwidth-input').change(function() {
       bandwidth = Number(this.value) * 1000 / 8;
       return draw();
@@ -675,7 +678,7 @@
   });
 
   load_hints = function() {
-    var hint_buttons, template;
+    var hint_buttons, preload, template;
 
     template = '<a class="next-hint" href="#" onclick="next_popover(#id#); return false;">Next</a>';
     hint_buttons = $('#hints>i');
@@ -716,7 +719,9 @@
       }
     });
     $('#hints').show();
-    return $('#hints>*').first().popover('show');
+    $('#hints>*').first().popover('show');
+    preload = new Image();
+    return preload.src = "img/legend-request.svg";
   };
 
   window.load_example = function(load_pcap) {
