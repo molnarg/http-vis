@@ -618,6 +618,9 @@
     $('#colortheme-dropdown').change(function() {
       return svg.attr('class', this.selectedOptions[0].innerHTML);
     });
+    $('#emphasize-dropdown').change(function() {
+      return svg.find('#packets').attr('class', 'packets emphasize-' + this.selectedOptions[0].innerHTML);
+    });
     $('#bandwidth-input').change(function() {
       bandwidth = Number(this.value) * 1000 / 8;
       return draw();
