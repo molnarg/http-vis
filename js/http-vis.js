@@ -515,7 +515,7 @@
       }).join(''));
     };
     notsupported = function() {
-      return alert('Sorry, this browser is not yet supported. Please come back with Chrome or Chromium.');
+      return alert('Error: could not initialize packet.js. Sorry for the inconvenience, please try with another browser.');
     };
     try {
       if (typeof Packet.views.PcapFile !== 'function') {

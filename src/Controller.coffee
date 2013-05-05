@@ -4,7 +4,7 @@ $ ->
   options = (dropdown, options) -> dropdown.html options.map((text) -> "<option>#{text}</option>").join('')
 
   # Testing if packet.js works properly
-  notsupported = -> alert 'Sorry, this browser is not yet supported. Please come back with Chrome or Chromium.'
+  notsupported = -> alert 'Error: could not initialize packet.js. Sorry for the inconvenience, please try with another browser.'
   try
     notsupported() if (typeof Packet.views.PcapFile isnt 'function')
   catch e
