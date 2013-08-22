@@ -78,6 +78,7 @@ $ ->
   ).change ->
     $('#loading').show()
     file = @files[0]
+    document.title = $('#file-chooser').val().replace(/.*[/\\]/, '')
     reader = new FileReader()
     reader.readAsArrayBuffer file
     reader.onload = -> load new DataView(reader.result)
